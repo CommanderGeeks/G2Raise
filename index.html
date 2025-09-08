@@ -255,6 +255,12 @@
             font-size: 1.1em;
         }
         
+        .info-box h4 {
+            color: #16a34a;
+            margin: 15px 0 10px 0;
+            font-size: 1em;
+        }
+        
         .info-grid {
             display: grid;
             grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
@@ -409,20 +415,81 @@
                             <div class="info-value" id="g2TotalFees">$0</div>
                         </div>
                         <div class="info-item">
+                            <div class="info-label">G2 Investment in Yafa</div>
+                            <div class="info-value" id="g2YafaInvestment">$0</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">G2 Value Post-Raise</div>
+                            <div class="info-value" id="g2YafaValuePostRaise">$0</div>
+                        </div>
+                        <div class="info-item">
                             <div class="info-label">File Management Fees</div>
                             <div class="info-value" id="fileFees">$0</div>
                         </div>
                         <div class="info-item">
-                            <div class="info-label">Amount to Yafa Ltd (Cash)</div>
+                            <div class="info-label">Amount to Yafa Ltd</div>
                             <div class="info-value" id="amountToYafa">$0</div>
                         </div>
                         <div class="info-item">
-                            <div class="info-label">Investor Cash Held</div>
-                            <div class="info-value" id="investorCashHeld">$0</div>
+                            <div class="info-label">Amount to Yafa (Cash Flow)</div>
+                            <div class="info-value" id="amountToYafaCash">$0</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-box">
+                    <h3>Investor Breakdown</h3>
+                    <h4>Individual Investor (Per Person)</h4>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Cash Held</div>
+                            <div class="info-value" id="individualCashHeld">$0</div>
                         </div>
                         <div class="info-item">
-                            <div class="info-label">Investor Amount Invested</div>
-                            <div class="info-value" id="investorAmountInvested">$0</div>
+                            <div class="info-label">Amount Invested</div>
+                            <div class="info-value" id="individualInvestmentAmount">$0</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Post-Raise Value</div>
+                            <div class="info-value" id="individualPostRaiseValue">$0</div>
+                        </div>
+                    </div>
+                    
+                    <h4>Group Totals (All Investors)</h4>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">Total Cash Held</div>
+                            <div class="info-value" id="groupCashHeld">$0</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Total Amount Invested</div>
+                            <div class="info-value" id="groupInvestmentAmount">$0</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Total Post-Raise Value</div>
+                            <div class="info-value" id="groupPostRaiseValue">$0</div>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="info-box">
+                    <h3>Chart Injection (Funding Round)</h3>
+                    <div class="info-grid">
+                        <div class="info-item">
+                            <div class="info-label">G2 Contribution</div>
+                            <div class="info-value" id="g2ChartContribution">$0</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Investor Contribution</div>
+                            <div class="info-value" id="investorChartContribution">$0</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Yafa Base Contribution</div>
+                            <div class="info-value" id="yafaChartContribution">$0</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">Net Cash Flow to Yafa</div>
+                            <div class="info-value" id="netCashToYafa">$0</div>
                         </div>
                     </div>
                 </div>
@@ -668,13 +735,31 @@
             const totalFileCosts = numInvestors * costPerFile;
             const amountToYafa = totalLoans - totalToInvestors - g2TotalFees - totalFileCosts;
             
+            // G2 Investment Calculations
+            const g2InvestmentPercent = 0.5; // G2 invests 50% of their success fees
+            const g2YafaInvestment = g2TotalFees * g2InvestmentPercent;
+            const g2YafaValuePostRaise = g2YafaInvestment * g2CashMultiplier;
+            
             // Calculate cash vs investment split for investors
             const investorCashHeld = totalToInvestors * (1 - investmentPercent);
             const investorAmountInvested = totalToInvestors * investmentPercent;
             
+            // Individual investor breakdowns
+            const individualCashHeld = investorCashHeld / numInvestors;
+            const individualInvestmentAmount = investorAmountInvested / numInvestors;
+            const individualPostRaiseValue = individualInvestmentAmount * investorCashMultiplier;
+            
+            // Chart contribution calculations (total funding round breakdown)
+            const g2ChartContribution = g2YafaInvestment;
+            const investorChartContribution = investorAmountInvested;
+            const yafaChartContribution = 2700000; // Base $2.7M as mentioned
+            
+            // Calculate actual cash flow to Yafa after investments
+            const amountToYafaCash = amountToYafa - (yafaChartContribution - g2YafaInvestment - investorAmountInvested);
+            
             // Calculate token allocations based on multipliers
             const investorTokenAllocation = (investorAmountInvested * investorCashMultiplier) / postRaisePrice;
-            const g2TokenAllocation = (g2TotalFees * g2CashMultiplier) / postRaisePrice;
+            const g2TokenAllocation = (g2YafaInvestment * g2CashMultiplier) / postRaisePrice;
             
             // Calculate cost basis per token
             const investorCostBasis = postRaisePrice / investorCashMultiplier;
@@ -697,6 +782,7 @@
                 g2YafaInvestment,
                 g2YafaValuePostRaise,
                 totalFileCosts,
+                amountToYafa,
                 investorCashHeld,
                 investorAmountInvested,
                 individualCashHeld,
@@ -737,22 +823,26 @@
             document.getElementById('g2YafaInvestment').textContent = formatCurrency(loanModelData.g2YafaInvestment);
             document.getElementById('g2YafaValuePostRaise').textContent = formatCurrency(loanModelData.g2YafaValuePostRaise);
             document.getElementById('fileFees').textContent = formatCurrency(loanModelData.totalFileCosts);
+            document.getElementById('amountToYafa').textContent = formatCurrency(loanModelData.amountToYafa);
+            document.getElementById('amountToYafaCash').textContent = formatCurrency(loanModelData.amountToYafaCash);
             
-            // Investor Breakdown
+            // Individual investor breakdown (per investor)
             document.getElementById('individualCashHeld').textContent = formatCurrency(loanModelData.individualCashHeld);
-            document.getElementById('groupCashHeld').textContent = formatCurrency(loanModelData.investorCashHeld);
             document.getElementById('individualInvestmentAmount').textContent = formatCurrency(loanModelData.individualInvestmentAmount);
-            document.getElementById('groupInvestmentAmount').textContent = formatCurrency(loanModelData.investorAmountInvested);
             document.getElementById('individualPostRaiseValue').textContent = formatCurrency(loanModelData.individualPostRaiseValue);
+            
+            // Group totals (same as above but for verification)
+            document.getElementById('groupCashHeld').textContent = formatCurrency(loanModelData.investorCashHeld);
+            document.getElementById('groupInvestmentAmount').textContent = formatCurrency(loanModelData.investorAmountInvested);
             document.getElementById('groupPostRaiseValue').textContent = formatCurrency(loanModelData.investorAmountInvested * loanModelData.investorCashMultiplier);
             
-            // Chart Injection
+            // Chart Injection (funding round contributions)
             document.getElementById('g2ChartContribution').textContent = formatCurrency(loanModelData.g2ChartContribution);
             document.getElementById('investorChartContribution').textContent = formatCurrency(loanModelData.investorChartContribution);
             document.getElementById('yafaChartContribution').textContent = formatCurrency(loanModelData.yafaChartContribution);
-            document.getElementById('amountToYafaCash').textContent = formatCurrency(loanModelData.amountToYafaCash);
+            document.getElementById('netCashToYafa').textContent = formatCurrency(loanModelData.amountToYafaCash);
             
-            // Token Allocation (keeping existing)
+            // Token Allocation
             document.getElementById('investorTokens').textContent = formatNumber(loanModelData.investorTokenAllocation);
             document.getElementById('investorCostBasis').textContent = formatCurrency(loanModelData.investorCostBasis);
             document.getElementById('g2Tokens').textContent = formatNumber(loanModelData.g2TokenAllocation);
