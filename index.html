@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="en">
 <head>
@@ -682,7 +681,7 @@
         let yafaData = [];
         let ogModelData = [];
         
-        function switchTab(tabName) {
+        function switchTab(event, tabName) {
             // Hide all tabs
             document.querySelectorAll('.tab-content').forEach(tab => {
                 tab.classList.remove('active');
