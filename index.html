@@ -1223,9 +1223,9 @@
             tableBody.innerHTML = sellingPressureData.map(row => `
                 <tr>
                     <td>Year ${row.year}</td>
-                    <td>${formatNumber(row.businessTokenSales)}</td>
-                    <td>${formatNumber(row.g2TokenSales)}</td>
-                    <td>${formatNumber(row.totalTokenSales)}</td>
+                    <td>${formatTokenAmount(row.businessTokenSales)}</td>
+                    <td>${formatTokenAmount(row.g2TokenSales)}</td>
+                    <td>${formatTokenAmount(row.totalTokenSales)}</td>
                     <td>${formatCurrency(row.totalSaleValue)}</td>
                     <td>${formatCurrency(row.cumulativeSaleValue)}</td>
                 </tr>
