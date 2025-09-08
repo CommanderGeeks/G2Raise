@@ -814,10 +814,10 @@
             // Display main results
             displayLoanMainResults();
             
-            // Calculate all projections
+            // Calculate all projections (order matters!)
+            calculateLoanRepayment();
             calculateBusinessReturns();
             calculateG2Returns();
-            calculateLoanRepayment();
             calculateSellingPressure();
             calculateYafaImpact();
         }
