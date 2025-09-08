@@ -536,7 +536,6 @@
                                 <th>Capital Gains Tax</th>
                                 <th>Net After Tax</th>
                                 <th>Loan Payment</th>
-                                <th>Remaining Cash</th>
                                 <th>Cumulative Net Cash</th>
                                 <th>Remaining Tokens Value</th>
                             </tr>
@@ -584,7 +583,8 @@
                         <thead>
                             <tr>
                                 <th>Year</th>
-                                <th>Annual Payment</th>
+                                <th>Total Annual Payment</th>
+                                <th>Per Investor Payment</th>
                                 <th>Principal</th>
                                 <th>Interest</th>
                                 <th>Remaining Balance</th>
@@ -698,6 +698,13 @@
         }
         
         function formatNumber(amount) {
+            return new Intl.NumberFormat('en-US', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(amount);
+        }
+        
+        function formatTokenAmount(amount) {
             return new Intl.NumberFormat('en-US', {
                 minimumFractionDigits: 0,
                 maximumFractionDigits: 0
@@ -847,6 +854,7 @@
             document.getElementById('investorCostBasis').textContent = '$' + loanModelData.investorCostBasis.toFixed(3);
             document.getElementById('g2Tokens').textContent = formatNumber(loanModelData.g2TokenAllocation);
             document.getElementById('g2CostBasis').textContent = '$' + loanModelData.g2CostBasis.toFixed(3);
+            
             document.getElementById('loan-main-results').classList.remove('hidden');
         }
         
@@ -856,12 +864,11 @@
             const tokensPerInvestor = loanModelData.investorTokenAllocation / loanModelData.numInvestors;
             const annualVestAmount = tokensPerInvestor / 6; // 6-year vest after 1-year lock
             const cashPerInvestor = loanModelData.investorCashHeld / loanModelData.numInvestors;
-            const loanPerInvestor = loanModelData.loanAmount;
             
             let tokensHeld = tokensPerInvestor;
             let remainingCash = cashPerInvestor;
             let totalVested = 0;
-            let cumulativeNetCash = 0;
+            let cumulativeNetCash = remainingCash; // Start with initial cash
             let tokenPrice = loanModelData.postRaisePrice;
             
             for (let year = 1; year <= loanModelData.projectionYears; year++) {
@@ -873,20 +880,17 @@
                 let capitalGainsTax = 0;
                 let netAfterTax = 0;
                 let loanPayment = 0;
-                let remainingCashThisYear = 0;
                 
                 // Calculate loan payment for this year
                 if (year <= loanModelData.amortization && year <= loanSchedule.length) {
-                    loanPayment = loanSchedule[year - 1].annualPayment / loanModelData.numInvestors;
+                    loanPayment = loanSchedule[year - 1].annualPaymentPerInvestor;
                 }
                 
-                // Year 1: Lock period, no vesting, use cash for loan payment
+                // Year 1: Lock period, no vesting, subtract loan payment from cash
                 if (year === 1) {
                     tokensVestedThisYear = 0;
                     tokensSoldThisYear = 0;
-                    remainingCashThisYear = Math.max(0, remainingCash - loanPayment);
-                    remainingCash = remainingCashThisYear;
-                    cumulativeNetCash += remainingCashThisYear;
+                    cumulativeNetCash -= loanPayment;
                 }
                 // Years 2-7: Vesting period
                 else if (year >= 2 && year <= 7) {
@@ -903,20 +907,15 @@
                     capitalGainsTax = capitalGains * loanModelData.corporateTaxRate;
                     netAfterTax = grossSaleAmount - capitalGainsTax;
                     
-                    // Use cash first, then token sales for loan payment
-                    let totalAvailable = remainingCash + netAfterTax;
-                    let usedForLoan = Math.min(loanPayment, totalAvailable);
-                    remainingCashThisYear = Math.max(0, totalAvailable - usedForLoan);
-                    remainingCash = 0; // Cash gets used up in early years
-                    cumulativeNetCash += remainingCashThisYear;
+                    // Add token sale proceeds, then subtract loan payment
+                    cumulativeNetCash += netAfterTax - loanPayment;
                 }
                 // Years 8+: No more vesting, but may still have loan payments
                 else {
                     tokensVestedThisYear = 0;
-                    // If there are still loan payments and remaining cash/previous gains
-                    if (loanPayment > 0 && cumulativeNetCash >= loanPayment) {
-                        cumulativeNetCash -= loanPayment;
-                    }
+                    tokensSoldThisYear = 0;
+                    // Still subtract loan payment if applicable
+                    cumulativeNetCash -= loanPayment;
                 }
                 
                 businessData.push({
@@ -929,7 +928,6 @@
                     capitalGainsTax,
                     netAfterTax,
                     loanPayment,
-                    remainingCashThisYear,
                     cumulativeNetCash,
                     remainingValue: tokensHeld * tokenPrice
                 });
@@ -982,7 +980,6 @@
                     <td>${formatCurrency(row.capitalGainsTax)}</td>
                     <td>${formatCurrency(row.netAfterTax)}</td>
                     <td>${formatCurrency(row.loanPayment)}</td>
-                    <td>${formatCurrency(row.remainingCashThisYear)}</td>
                     <td>${formatCurrency(row.cumulativeNetCash)}</td>
                     <td>${formatCurrency(row.remainingValue)}</td>
                 </tr>
@@ -1135,6 +1132,7 @@
                 loanSchedule.push({
                     year,
                     annualPayment,
+                    annualPaymentPerInvestor: annualPayment / loanModelData.numInvestors,
                     annualPrincipal,
                     annualInterest,
                     remainingBalance: Math.max(0, remainingBalance)
@@ -1171,6 +1169,7 @@
                 <tr>
                     <td>Year ${row.year}</td>
                     <td>${formatCurrency(row.annualPayment)}</td>
+                    <td>${formatCurrency(row.annualPaymentPerInvestor)}</td>
                     <td>${formatCurrency(row.annualPrincipal)}</td>
                     <td>${formatCurrency(row.annualInterest)}</td>
                     <td>${formatCurrency(row.remainingBalance)}</td>
