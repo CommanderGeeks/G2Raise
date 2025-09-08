@@ -844,10 +844,9 @@
             
             // Token Allocation
             document.getElementById('investorTokens').textContent = formatNumber(loanModelData.investorTokenAllocation);
-            document.getElementById('investorCostBasis').textContent = formatCurrency(loanModelData.investorCostBasis);
+            document.getElementById('investorCostBasis').textContent = '$' + loanModelData.investorCostBasis.toFixed(3);
             document.getElementById('g2Tokens').textContent = formatNumber(loanModelData.g2TokenAllocation);
-            document.getElementById('g2CostBasis').textContent = formatCurrency(loanModelData.g2CostBasis);
-            
+            document.getElementById('g2CostBasis').textContent = '$' + loanModelData.g2CostBasis.toFixed(3);
             document.getElementById('loan-main-results').classList.remove('hidden');
         }
         
