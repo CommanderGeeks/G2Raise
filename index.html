@@ -294,13 +294,13 @@
         </div>
         
         <div class="tabs">
-            <button class="tab-button active" onclick="window.switchTab('og-raise')">OG $5M Raise</button>
-            <button class="tab-button" onclick="window.switchTab('loan-main')">Loan Model Main</button>
-            <button class="tab-button" onclick="window.switchTab('investor-returns')">Investor Returns</button>
-            <button class="tab-button" onclick="window.switchTab('g2-returns')">G2 Returns</button>
-            <button class="tab-button" onclick="window.switchTab('loan-repayment')">Loan Repayment</button>
-            <button class="tab-button" onclick="window.switchTab('selling-pressure')">Selling Pressure</button>
-            <button class="tab-button" onclick="window.switchTab('yafa-impact')">Yafa Net Impact</button>
+            <button class="tab-button active" onclick="switchTab('og-raise', this)">OG $5M Raise</button>
+            <button class="tab-button" onclick="switchTab('loan-main', this)">Loan Model Main</button>
+            <button class="tab-button" onclick="switchTab('investor-returns', this)">Investor Returns</button>
+            <button class="tab-button" onclick="switchTab('g2-returns', this)">G2 Returns</button>
+            <button class="tab-button" onclick="switchTab('loan-repayment', this)">Loan Repayment</button>
+            <button class="tab-button" onclick="switchTab('selling-pressure', this)">Selling Pressure</button>
+            <button class="tab-button" onclick="switchTab('yafa-impact', this)">Yafa Net Impact</button>
         </div>
         
         <!-- OG $5M Raise Tab -->
@@ -321,9 +321,13 @@
                         <label for="og-projectionYears">Projection Years</label>
                         <input type="number" id="og-projectionYears" value="10" min="5" max="20" step="1">
                     </div>
+                    <div class="input-group">
+                        <label for="og-withdrawPercent">% of Vested Tokens Sold (Years 2-6)</label>
+                        <input type="number" id="og-withdrawPercent" value="50" min="0" max="100" step="10">
+                    </div>
                 </div>
                 
-                <button class="calculate-btn" onclick="window.calculateOGModel()">Calculate OG Model</button>
+                <button class="calculate-btn" onclick="calculateOGModel()">Calculate OG Model</button>
             </div>
             
             <div id="og-results" class="hidden">
@@ -335,6 +339,7 @@
                             <thead>
                                 <tr>
                                     <th>Year</th>
+                                    <th>Tokens Held</th>
                                     <th>Token Price</th>
                                     <th>Portfolio Value</th>
                                     <th>Annual Withdrawn</th>
@@ -412,7 +417,7 @@
                     </div>
                 </div>
                 
-                <button class="calculate-btn" onclick="window.calculateLoanModel()">Calculate Loan Model</button>
+                <button class="calculate-btn" onclick="calculateLoanModel()">Calculate Loan Model</button>
             </div>
             
             <div id="loan-main-results" class="hidden">
@@ -440,7 +445,7 @@
                             <div class="info-value" id="fileFees">$0</div>
                         </div>
                         <div class="info-item">
-                            <div class="info-label">Amount to Yafa Ltd</div>
+                            <div class="info-label">Amount to Yafa Ltd (Cash)</div>
                             <div class="info-value" id="amountToYafa">$0</div>
                         </div>
                     </div>
@@ -455,12 +460,12 @@
                             <div class="info-value" id="g2InvestorChartBuys">$0</div>
                         </div>
                         <div class="info-item">
-                            <div class="info-label">Yafa Chart Injection (3.5%)</div>
-                            <div class="info-value" id="yafaChartInjection">$0</div>
+                            <div class="info-label">Yafa OTCs</div>
+                            <div class="info-value" id="yafaOTCs">$340,000</div>
                         </div>
                         <div class="info-item">
-                            <div class="info-label">Yafa OTCs (2%)</div>
-                            <div class="info-value" id="yafaOTCs">$340,000</div>
+                            <div class="info-label">Yafa Chart Injection</div>
+                            <div class="info-value" id="yafaChartInjection">$0</div>
                         </div>
                     </div>
                 </div>
@@ -565,18 +570,18 @@
             <div class="results-card">
                 <h3 class="section-title">📉 Total Market Selling Pressure</h3>
                 <div class="table-container">
-                    <table>
+                    <table id="pressure-table">
                         <thead>
                             <tr>
-                                <th>Period</th>
-                                <th>Loan Payments Required</th>
-                                <th>Investor Sales</th>
+                                <th>Year</th>
+                                <th>Annual Loan Payments</th>
+                                <th>All Investors Sales</th>
                                 <th>G2 Sales</th>
                                 <th>Total Selling Pressure</th>
-                                <th>Cumulative</th>
+                                <th>Cumulative Pressure</th>
                             </tr>
                         </thead>
-                        <tbody id="pressure-table"></tbody>
+                        <tbody></tbody>
                     </table>
                 </div>
             </div>
@@ -608,390 +613,711 @@
                 </div>
             </div>
         </div>
+        
     </div>
 
     <script>
-    console.log("Script starting...");
-    
-    // Constants
-    window.TOTAL_SUPPLY = 1000000000;
-    window.INITIAL_MARKET_CAP = 12460000;
-    window.TARGET_MARKET_CAP = 500000000;
-    window.POST_INJECTION_PRICE = 0.50;
-    window.CHART_INJECTION = 3040000;
-    window.VESTING_MONTHS = 72;
-    window.LOCK_MONTHS = 12;
-    
-    // Global data storage
-    window.loanModelData = {};
-    window.investorData = [];
-    window.g2Data = [];
-    window.loanSchedule = [];
-    window.sellingPressureData = [];
-    window.yafaData = [];
-    window.ogModelData = [];
-    
-    // Tab switching
-    window.switchTab = function(tabName) {
-        console.log("Switching to tab:", tabName);
+        // Constants from original
+        const TOTAL_SUPPLY = 1000000000;
+        const INITIAL_MARKET_CAP = 12460000;
+        const TARGET_MARKET_CAP = 500000000;
+        const POST_INJECTION_PRICE = 0.50;
+        const CHART_INJECTION = 3040000;
+        const VESTING_MONTHS = 72;
+        const LOCK_MONTHS = 12;
+        const OG_LOCK_MONTHS = 12;
+        const OG_VESTING_MONTHS = 60;
         
-        document.querySelectorAll('.tab-content').forEach(tab => {
-            tab.classList.remove('active');
-        });
+        // Global data storage
+        let loanModelData = {};
+        let investorData = [];
+        let g2Data = [];
+        let loanSchedule = [];
+        let sellingPressureData = [];
+        let yafaData = [];
+        let ogModelData = [];
         
-        document.querySelectorAll('.tab-button').forEach(btn => {
-            btn.classList.remove('active');
-        });
-        
-        const selectedTab = document.getElementById(tabName);
-        if (selectedTab) {
-            selectedTab.classList.add('active');
-        }
-        
-        const buttons = document.querySelectorAll('.tab-button');
-        const tabIndex = ['og-raise', 'loan-main', 'investor-returns', 'g2-returns', 'loan-repayment', 'selling-pressure', 'yafa-impact'].indexOf(tabName);
-        if (tabIndex >= 0 && buttons[tabIndex]) {
-            buttons[tabIndex].classList.add('active');
-        }
-    }
-    
-    // Calculate OG Model
-    window.calculateOGModel = function() {
-        console.log("Calculating OG Model...");
-        
-        const purchaseAmount = parseFloat(document.getElementById('og-purchaseAmount').value) || 0;
-        const annualGrowth = parseFloat(document.getElementById('og-annualGrowth').value) / 100;
-        const projectionYears = parseInt(document.getElementById('og-projectionYears').value);
-        
-        const totalRaise = 5000000;
-        const tokensAvailable = 25000000;
-        const collectiveTokens = (purchaseAmount / totalRaise) * tokensAvailable;
-        
-        window.ogModelData = [];
-        let tokensHeld = collectiveTokens;
-        let cumulativeWithdrawn = 0;
-        let tokenPrice = window.POST_INJECTION_PRICE;
-        const monthlyVesting = collectiveTokens / 60;
-        
-        for (let year = 1; year <= projectionYears; year++) {
-            let annualWithdrawn = 0;
+        function switchTab(tabName, btn) {
+            // Hide all tabs
+            document.querySelectorAll('.tab-content').forEach(tab => {
+                tab.classList.remove('active');
+            });
             
-            for (let month = 1; month <= 12; month++) {
-                const totalMonth = (year - 1) * 12 + month;
-                if (totalMonth <= 60) {
-                    const monthlyWithdraw = monthlyVesting * 0.5;
-                    annualWithdrawn += monthlyWithdraw * tokenPrice;
-                    tokensHeld -= monthlyWithdraw;
-                }
-                tokenPrice *= (1 + annualGrowth / 12);
+            // Remove active class from all buttons
+            document.querySelectorAll('.tab-button').forEach(button => {
+                button.classList.remove('active');
+            });
+            
+            // Show selected tab
+            const selectedTab = document.getElementById(tabName);
+            if (selectedTab) {
+                selectedTab.classList.add('active');
             }
             
-            cumulativeWithdrawn += annualWithdrawn;
-            
-            window.ogModelData.push({
-                year,
-                tokenPrice,
-                portfolioValue: tokensHeld * tokenPrice,
-                annualWithdrawn,
-                cumulativeWithdrawn,
-                totalReturn: tokensHeld * tokenPrice + cumulativeWithdrawn
-            });
+            // Highlight active button
+            if (btn) {
+                btn.classList.add('active');
+            }
         }
         
-        displayOGResults();
-    }
-    
-    // Display OG Results
-    window.displayOGResults = function() {
-        const purchaseAmount = parseFloat(document.getElementById('og-purchaseAmount').value);
-        const finalData = window.ogModelData[window.ogModelData.length - 1];
-        const roi = ((finalData.totalReturn - purchaseAmount) / purchaseAmount * 100).toFixed(0);
+        function formatCurrency(amount) {
+            return new Intl.NumberFormat('en-US', {
+                style: 'currency',
+                currency: 'USD',
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(amount);
+        }
         
-        document.getElementById('og-summary').innerHTML = `
-            <div class="summary-card">
-                <h4>Initial Investment</h4>
-                <div class="value">${formatCurrency(purchaseAmount)}</div>
-            </div>
-            <div class="summary-card">
-                <h4>Total Withdrawn</h4>
-                <div class="value">${formatCurrency(finalData.cumulativeWithdrawn)}</div>
-            </div>
-            <div class="summary-card">
-                <h4>Portfolio Value</h4>
-                <div class="value">${formatCurrency(finalData.portfolioValue)}</div>
-            </div>
-            <div class="summary-card">
-                <h4>Total Return</h4>
-                <div class="value">${formatCurrency(finalData.totalReturn)}</div>
-            </div>
-            <div class="summary-card">
-                <h4>ROI</h4>
-                <div class="value">${roi}%</div>
-            </div>
-        `;
+        function formatNumber(amount) {
+            return new Intl.NumberFormat('en-US', {
+                minimumFractionDigits: 0,
+                maximumFractionDigits: 0
+            }).format(amount);
+        }
         
-        document.getElementById('og-table').innerHTML = window.ogModelData.map(row => `
-            <tr>
-                <td>Year ${row.year}</td>
-                <td>$${row.tokenPrice.toFixed(3)}</td>
-                <td>${formatCurrency(row.portfolioValue)}</td>
-                <td>${formatCurrency(row.annualWithdrawn)}</td>
-                <td>${formatCurrency(row.cumulativeWithdrawn)}</td>
-                <td>${formatCurrency(row.totalReturn)}</td>
-            </tr>
-        `).join('');
-        
-        document.getElementById('og-results').classList.remove('hidden');
-    }
-    
-    // Calculate Loan Model (simplified for brevity - includes all sub-calculations)
-    window.calculateLoanModel = function() {
-        console.log("Calculating Loan Model...");
-        
-        const numInvestors = parseInt(document.getElementById('numInvestors').value);
-        const loanAmount = parseFloat(document.getElementById('loanAmount').value);
-        const interestRate = parseFloat(document.getElementById('interestRate').value) / 100;
-        const amortization = parseInt(document.getElementById('amortization').value);
-        const g2FeePercent = parseFloat(document.getElementById('g2Fee').value) / 100;
-        const costPerFile = parseFloat(document.getElementById('costPerFile').value);
-        const annualGrowth = parseFloat(document.getElementById('annualGrowth').value) / 100;
-        const investorWithdrawPercent = parseFloat(document.getElementById('investorWithdrawPercent').value) / 100;
-        const g2WithdrawPercent = parseFloat(document.getElementById('g2WithdrawPercent').value) / 100;
-        const projectionYears = parseInt(document.getElementById('projectionYears').value);
-        
-        const totalLoans = numInvestors * loanAmount;
-        const g2TotalFees = totalLoans * g2FeePercent;
-        const g2Investment = g2TotalFees * 0.5;
-        const totalToInvestors = numInvestors * 100000;
-        const totalFileCosts = numInvestors * costPerFile;
-        
-        const totalDirectChartBuys = 2700000;
-        const g2InvestorChartBuys = g2Investment + totalToInvestors;
-        const yafaChartInjection = totalDirectChartBuys - g2Investment - totalToInvestors;
-        const yafaOTCs = 340000;
-        const amountToYafa = totalLoans - g2TotalFees - totalToInvestors - totalFileCosts;
-        
-        const totalTokenPool = 55000000;
-        const investorTokenAllocation = (totalToInvestors * 4) / window.POST_INJECTION_PRICE;
-        const g2TokenAllocation = (g2Investment * 4) / window.POST_INJECTION_PRICE;
-        const yafaTokens = totalTokenPool - investorTokenAllocation - g2TokenAllocation;
-        
-        window.loanModelData = {
-            numInvestors,
-            loanAmount,
-            interestRate,
-            amortization,
-            g2FeePercent,
-            totalLoans,
-            g2TotalFees,
-            g2Investment,
-            totalToInvestors,
-            totalFileCosts,
-            amountToYafa,
-            totalDirectChartBuys,
-            g2InvestorChartBuys,
-            yafaChartInjection,
-            yafaOTCs,
-            investorTokenAllocation,
-            g2TokenAllocation,
-            yafaTokens,
-            annualGrowth,
-            investorWithdrawPercent,
-            g2WithdrawPercent,
-            projectionYears
-        };
-        
-        displayLoanMainResults();
-        calculateAllReturns();
-    }
-    
-    // Display Loan Main Results
-    window.displayLoanMainResults = function() {
-        document.getElementById('totalLoans').textContent = formatCurrency(window.loanModelData.totalLoans);
-        document.getElementById('g2TotalFees').textContent = formatCurrency(window.loanModelData.g2TotalFees);
-        document.getElementById('g2Investment').textContent = formatCurrency(window.loanModelData.g2Investment);
-        document.getElementById('totalToInvestors').textContent = formatCurrency(window.loanModelData.totalToInvestors);
-        document.getElementById('fileFees').textContent = formatCurrency(window.loanModelData.totalFileCosts);
-        document.getElementById('amountToYafa').textContent = formatCurrency(window.loanModelData.amountToYafa);
-        
-        document.getElementById('totalDirectChartBuys').textContent = formatCurrency(window.loanModelData.totalDirectChartBuys);
-        document.getElementById('g2InvestorChartBuys').textContent = formatCurrency(window.loanModelData.g2InvestorChartBuys);
-        document.getElementById('yafaChartInjection').textContent = formatCurrency(window.loanModelData.yafaChartInjection);
-        document.getElementById('yafaOTCs').textContent = formatCurrency(window.loanModelData.yafaOTCs);
-        
-        document.getElementById('investorTokens').textContent = formatNumber(window.loanModelData.investorTokenAllocation);
-        document.getElementById('g2Tokens').textContent = formatNumber(window.loanModelData.g2TokenAllocation);
-        document.getElementById('yafaTokens').textContent = formatNumber(window.loanModelData.yafaTokens);
-        document.getElementById('totalAllocated').textContent = formatNumber(
-            window.loanModelData.investorTokenAllocation + window.loanModelData.g2TokenAllocation + window.loanModelData.yafaTokens
-        );
-        
-        document.getElementById('loan-main-results').classList.remove('hidden');
-    }
-    
-    // Calculate all returns (simplified version)
-    window.calculateAllReturns = function() {
-        // This would include all the calculation functions
-        // For brevity, I'm including a simplified version
-        calculateInvestorReturns();
-        calculateG2Returns();
-        calculateLoanRepayment();
-        calculateSellingPressure();
-        calculateYafaImpact();
-    }
-    
-    // Calculate Investor Returns
-    window.calculateInvestorReturns = function() {
-        window.investorData = [];
-        const tokensPerInvestor = window.loanModelData.investorTokenAllocation / window.loanModelData.numInvestors;
-        let tokensHeld = tokensPerInvestor;
-        let cumulativeWithdrawn = 0;
-        let tokenPrice = window.POST_INJECTION_PRICE;
-        const monthlyVesting = tokensPerInvestor / window.VESTING_MONTHS;
-        
-        for (let year = 1; year <= window.loanModelData.projectionYears; year++) {
-            let annualWithdrawn = 0;
+        // OG Model Calculation
+        function calculateOGModel() {
+            const purchaseAmount = parseFloat(document.getElementById('og-purchaseAmount').value) || 0;
+            const annualGrowth = parseFloat(document.getElementById('og-annualGrowth').value) / 100;
+            const projectionYears = parseInt(document.getElementById('og-projectionYears').value);
+            const withdrawPercent = parseFloat(document.getElementById('og-withdrawPercent').value) / 100;
             
-            for (let month = 1; month <= 12; month++) {
-                const totalMonth = (year - 1) * 12 + month;
+            const totalRaise = 5000000;
+            const tokensAvailable = 25000000;
+            const collectiveTokens = (purchaseAmount / totalRaise) * tokensAvailable;
+            
+            ogModelData = [];
+            let tokensHeld = collectiveTokens;
+            let cumulativeWithdrawn = 0;
+            let tokenPrice = POST_INJECTION_PRICE;
+            const monthlyVesting = collectiveTokens / OG_VESTING_MONTHS;
+            
+            for (let year = 1; year <= projectionYears; year++) {
+                let annualWithdrawn = 0;
                 
-                if (totalMonth > window.LOCK_MONTHS && totalMonth <= (window.LOCK_MONTHS + window.VESTING_MONTHS)) {
-                    const monthlyWithdraw = monthlyVesting * window.loanModelData.investorWithdrawPercent;
-                    annualWithdrawn += monthlyWithdraw * tokenPrice;
-                    tokensHeld -= monthlyWithdraw;
+                for (let month = 1; month <= 12; month++) {
+                    const totalMonth = (year - 1) * 12 + month;
+                    
+                    // Year 1: Locked, no sales
+                    // Years 2-6: Can sell withdrawPercent of vested tokens
+                    if (totalMonth > OG_LOCK_MONTHS && totalMonth <= (OG_LOCK_MONTHS + OG_VESTING_MONTHS)) {
+                        if (year >= 2 && year <= 6) {
+                            const monthlyWithdraw = monthlyVesting * withdrawPercent;
+                            annualWithdrawn += monthlyWithdraw * tokenPrice;
+                            tokensHeld -= monthlyWithdraw;
+                        }
+                    }
+                    
+                    tokenPrice *= (1 + annualGrowth / 12);
                 }
                 
-                tokenPrice *= (1 + window.loanModelData.annualGrowth / 12);
+                cumulativeWithdrawn += annualWithdrawn;
+                
+                ogModelData.push({
+                    year,
+                    tokensHeld,
+                    tokenPrice,
+                    portfolioValue: tokensHeld * tokenPrice,
+                    annualWithdrawn,
+                    cumulativeWithdrawn,
+                    totalReturn: tokensHeld * tokenPrice + cumulativeWithdrawn
+                });
             }
             
-            cumulativeWithdrawn += annualWithdrawn;
-            
-            window.investorData.push({
-                year,
-                tokensHeld,
-                tokenPrice,
-                portfolioValue: tokensHeld * tokenPrice,
-                annualWithdrawn,
-                cumulativeWithdrawn,
-                totalReturn: tokensHeld * tokenPrice + cumulativeWithdrawn
-            });
+            displayOGResults();
         }
         
-        displayInvestorReturns();
-    }
-    
-    // Display Investor Returns
-    window.displayInvestorReturns = function() {
-        const finalData = window.investorData[window.investorData.length - 1];
-        const roi = ((finalData.totalReturn - 100000) / 100000 * 100).toFixed(0);
+        function displayOGResults() {
+            const purchaseAmount = parseFloat(document.getElementById('og-purchaseAmount').value);
+            const finalData = ogModelData[ogModelData.length - 1];
+            const roi = ((finalData.totalReturn - purchaseAmount) / purchaseAmount * 100).toFixed(0);
+            
+            document.getElementById('og-summary').innerHTML = `
+                <div class="summary-card">
+                    <h4>Initial Investment</h4>
+                    <div class="value">${formatCurrency(purchaseAmount)}</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Total Withdrawn</h4>
+                    <div class="value">${formatCurrency(finalData.cumulativeWithdrawn)}</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Portfolio Value</h4>
+                    <div class="value">${formatCurrency(finalData.portfolioValue)}</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Total Return</h4>
+                    <div class="value">${formatCurrency(finalData.totalReturn)}</div>
+                </div>
+                <div class="summary-card">
+                    <h4>ROI</h4>
+                    <div class="value">${roi}%</div>
+                </div>
+            `;
+            
+            document.getElementById('og-table').innerHTML = ogModelData.map(row => `
+                <tr>
+                    <td>Year ${row.year}</td>
+                    <td>${formatNumber(row.tokensHeld)}</td>
+                    <td>${row.tokenPrice.toFixed(3)}</td>
+                    <td>${formatCurrency(row.portfolioValue)}</td>
+                    <td>${formatCurrency(row.annualWithdrawn)}</td>
+                    <td>${formatCurrency(row.cumulativeWithdrawn)}</td>
+                    <td>${formatCurrency(row.totalReturn)}</td>
+                </tr>
+            `).join('');
+            
+            document.getElementById('og-results').classList.remove('hidden');
+        }
         
-        document.getElementById('investor-summary').innerHTML = `
-            <div class="summary-card">
-                <h4>Investment</h4>
-                <div class="value">$100,000</div>
-            </div>
-            <div class="summary-card">
-                <h4>Tokens Allocated (4x)</h4>
-                <div class="value">${formatNumber(window.loanModelData.investorTokenAllocation / window.loanModelData.numInvestors)}</div>
-            </div>
-            <div class="summary-card">
-                <h4>Final Portfolio</h4>
-                <div class="value">${formatCurrency(finalData.portfolioValue)}</div>
-            </div>
-            <div class="summary-card">
-                <h4>Total Withdrawn</h4>
-                <div class="value">${formatCurrency(finalData.cumulativeWithdrawn)}</div>
-            </div>
-            <div class="summary-card">
-                <h4>Total Return</h4>
-                <div class="value">${formatCurrency(finalData.totalReturn)}</div>
-            </div>
-            <div class="summary-card">
-                <h4>ROI</h4>
-                <div class="value">${roi}%</div>
-            </div>
-        `;
+        // Loan Model Calculation
+        function calculateLoanModel() {
+            // Get inputs
+            const numInvestors = parseInt(document.getElementById('numInvestors').value);
+            const loanAmount = parseFloat(document.getElementById('loanAmount').value);
+            const interestRate = parseFloat(document.getElementById('interestRate').value) / 100;
+            const amortization = parseInt(document.getElementById('amortization').value);
+            const g2FeePercent = parseFloat(document.getElementById('g2Fee').value) / 100;
+            const costPerFile = parseFloat(document.getElementById('costPerFile').value);
+            const annualGrowth = parseFloat(document.getElementById('annualGrowth').value) / 100;
+            const investorWithdrawPercent = parseFloat(document.getElementById('investorWithdrawPercent').value) / 100;
+            const g2WithdrawPercent = parseFloat(document.getElementById('g2WithdrawPercent').value) / 100;
+            const projectionYears = parseInt(document.getElementById('projectionYears').value);
+            
+            // Calculate deal structure
+            const totalLoans = numInvestors * loanAmount;
+            const g2TotalFees = totalLoans * g2FeePercent;
+            const g2Investment = g2TotalFees * 0.5;
+            const totalToInvestors = numInvestors * 100000;
+            const totalFileCosts = numInvestors * costPerFile;
+            
+            // New calculations for chart buys and OTCs
+            const totalDirectChartBuys = 2700000;
+            const g2InvestorChartBuys = g2Investment + totalToInvestors;
+            const yafaOTCs = 340000;
+            
+            // Calculate Yafa's portion of the chart buys
+            const yafaChartInjection = totalDirectChartBuys - g2InvestorChartBuys;
+            
+            // Calculate amount to Yafa Ltd (remaining cash after all allocations)
+            const amountToYafa = totalLoans - g2TotalFees - totalToInvestors - totalFileCosts - yafaOTCs - yafaChartInjection;
+            
+            // Calculate token allocations from 55M token pool at $0.50
+            const totalTokenPool = 55000000;
+            const investorTokenAllocation = (totalToInvestors * 4) / POST_INJECTION_PRICE;
+            const g2TokenAllocation = (g2Investment * 4) / POST_INJECTION_PRICE;
+            const yafaTokens = totalTokenPool - investorTokenAllocation - g2TokenAllocation;
+            
+            // Store main model data
+            loanModelData = {
+                numInvestors,
+                loanAmount,
+                interestRate,
+                amortization,
+                g2FeePercent,
+                totalLoans,
+                g2TotalFees,
+                g2Investment,
+                totalToInvestors,
+                totalFileCosts,
+                amountToYafa,
+                totalDirectChartBuys,
+                g2InvestorChartBuys,
+                yafaChartInjection,
+                yafaOTCs,
+                investorTokenAllocation,
+                g2TokenAllocation,
+                yafaTokens,
+                annualGrowth,
+                investorWithdrawPercent,
+                g2WithdrawPercent,
+                projectionYears
+            };
+            
+            // Display main results
+            displayLoanMainResults();
+            
+            // Calculate all projections
+            calculateInvestorReturns();
+            calculateG2Returns();
+            calculateLoanRepayment();
+            calculateSellingPressure();
+            calculateYafaImpact();
+        }
         
-        document.getElementById('investor-table').innerHTML = window.investorData.map(row => `
-            <tr>
-                <td>Year ${row.year}</td>
-                <td>${formatNumber(row.tokensHeld)}</td>
-                <td>$${row.tokenPrice.toFixed(3)}</td>
-                <td>${formatCurrency(row.portfolioValue)}</td>
-                <td>${formatCurrency(row.annualWithdrawn)}</td>
-                <td>${formatCurrency(row.cumulativeWithdrawn)}</td>
-                <td>${formatCurrency(row.totalReturn)}</td>
-            </tr>
-        `).join('');
-    }
-    
-    // Similar functions for G2, Loan Repayment, Selling Pressure, and Yafa Impact would go here
-    // For brevity, I'm including simplified versions
-    
-    window.calculateG2Returns = function() {
-        // Similar to investor returns but for G2
-        window.g2Data = [];
-        // ... calculation logic ...
-        displayG2Returns();
-    }
-    
-    window.displayG2Returns = function() {
-        // Display G2 data
-        document.getElementById('g2-summary').innerHTML = '<div class="summary-card"><h4>G2 Returns</h4><div class="value">Calculated</div></div>';
-        document.getElementById('g2-table').innerHTML = '<tr><td colspan="7">G2 returns will be displayed here</td></tr>';
-    }
-    
-    window.calculateLoanRepayment = function() {
-        window.loanSchedule = [];
-        // ... loan calculation logic ...
-        displayLoanRepayment();
-    }
-    
-    window.displayLoanRepayment = function() {
-        document.getElementById('loan-summary').innerHTML = '<div class="summary-card"><h4>Loan Schedule</h4><div class="value">Calculated</div></div>';
-        document.getElementById('loan-table').innerHTML = '<tr><td colspan="6">Loan schedule will be displayed here</td></tr>';
-    }
-    
-    window.calculateSellingPressure = function() {
-        window.sellingPressureData = [];
-        // ... selling pressure calculation ...
-        displaySellingPressure();
-    }
-    
-    window.displaySellingPressure = function() {
-        document.getElementById('pressure-table').innerHTML = '<tr><td colspan="6">Selling pressure data will be displayed here</td></tr>';
-    }
-    
-    window.calculateYafaImpact = function() {
-        window.yafaData = [];
-        // ... yafa impact calculation ...
-        displayYafaImpact();
-    }
-    
-    window.displayYafaImpact = function() {
-        document.getElementById('yafa-summary').innerHTML = '<div class="summary-card"><h4>Yafa Impact</h4><div class="value">Calculated</div></div>';
-        document.getElementById('yafa-cashflow').innerHTML = '<div class="info-item"><div class="info-label">Cashflow</div><div class="info-value">Calculated</div></div>';
-        document.getElementById('yafa-table').innerHTML = '<tr><td colspan="6">Yafa impact data will be displayed here</td></tr>';
-    }
-    
-    // Helper functions
-    window.formatCurrency = function(amount) {
-        return new Intl.NumberFormat('en-US', {
-            style: 'currency',
-            currency: 'USD',
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-        }).format(amount);
-    }
-    
-    window.formatNumber = function(amount) {
-        return new Intl.NumberFormat('en-US', {
-            minimumFractionDigits: 0,
-            maximumFractionDigits: 0
-        }).format(amount);
-    }
-    
-    console.log("Script loaded successfully!");
+        function displayLoanMainResults() {
+            document.getElementById('totalLoans').textContent = formatCurrency(loanModelData.totalLoans);
+            document.getElementById('g2TotalFees').textContent = formatCurrency(loanModelData.g2TotalFees);
+            document.getElementById('g2Investment').textContent = formatCurrency(loanModelData.g2Investment);
+            document.getElementById('totalToInvestors').textContent = formatCurrency(loanModelData.totalToInvestors);
+            document.getElementById('fileFees').textContent = formatCurrency(loanModelData.totalFileCosts);
+            document.getElementById('amountToYafa').textContent = formatCurrency(loanModelData.amountToYafa);
+            
+            // Display chart injection breakdown
+            document.getElementById('totalDirectChartBuys').textContent = formatCurrency(loanModelData.totalDirectChartBuys);
+            document.getElementById('g2InvestorChartBuys').textContent = formatCurrency(loanModelData.g2InvestorChartBuys);
+            document.getElementById('yafaChartInjection').textContent = formatCurrency(loanModelData.yafaChartInjection);
+            document.getElementById('yafaOTCs').textContent = formatCurrency(loanModelData.yafaOTCs);
+            
+            document.getElementById('investorTokens').textContent = formatNumber(loanModelData.investorTokenAllocation);
+            document.getElementById('g2Tokens').textContent = formatNumber(loanModelData.g2TokenAllocation);
+            document.getElementById('yafaTokens').textContent = formatNumber(loanModelData.yafaTokens);
+            document.getElementById('totalAllocated').textContent = formatNumber(
+                loanModelData.investorTokenAllocation + loanModelData.g2TokenAllocation + loanModelData.yafaTokens
+            );
+            
+            document.getElementById('loan-main-results').classList.remove('hidden');
+        }
+        
+        function calculateInvestorReturns() {
+            investorData = [];
+            const tokensPerInvestor = loanModelData.investorTokenAllocation / loanModelData.numInvestors;
+            let tokensHeld = tokensPerInvestor;
+            let cumulativeWithdrawn = 0;
+            let tokenPrice = POST_INJECTION_PRICE;
+            const monthlyVesting = tokensPerInvestor / VESTING_MONTHS;
+            
+            for (let year = 1; year <= loanModelData.projectionYears; year++) {
+                let annualWithdrawn = 0;
+                
+                for (let month = 1; month <= 12; month++) {
+                    const totalMonth = (year - 1) * 12 + month;
+                    
+                    if (totalMonth > LOCK_MONTHS && totalMonth <= (LOCK_MONTHS + VESTING_MONTHS)) {
+                        const monthlyWithdraw = monthlyVesting * loanModelData.investorWithdrawPercent;
+                        annualWithdrawn += monthlyWithdraw * tokenPrice;
+                        tokensHeld -= monthlyWithdraw;
+                    }
+                    
+                    tokenPrice *= (1 + loanModelData.annualGrowth / 12);
+                }
+                
+                cumulativeWithdrawn += annualWithdrawn;
+                
+                investorData.push({
+                    year,
+                    tokensHeld,
+                    tokenPrice,
+                    portfolioValue: tokensHeld * tokenPrice,
+                    annualWithdrawn,
+                    cumulativeWithdrawn,
+                    totalReturn: tokensHeld * tokenPrice + cumulativeWithdrawn
+                });
+            }
+            
+            displayInvestorReturns();
+        }
+        
+        function displayInvestorReturns() {
+            const finalData = investorData[investorData.length - 1];
+            const roi = ((finalData.totalReturn - 100000) / 100000 * 100).toFixed(0);
+            
+            document.getElementById('investor-summary').innerHTML = `
+                <div class="summary-card">
+                    <h4>Investment</h4>
+                    <div class="value">$100,000</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Tokens Allocated (4x)</h4>
+                    <div class="value">${formatNumber(loanModelData.investorTokenAllocation / loanModelData.numInvestors)}</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Final Portfolio</h4>
+                    <div class="value">${formatCurrency(finalData.portfolioValue)}</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Total Withdrawn</h4>
+                    <div class="value">${formatCurrency(finalData.cumulativeWithdrawn)}</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Total Return</h4>
+                    <div class="value">${formatCurrency(finalData.totalReturn)}</div>
+                </div>
+                <div class="summary-card">
+                    <h4>ROI</h4>
+                    <div class="value">${roi}%</div>
+                </div>
+            `;
+            
+            document.getElementById('investor-table').innerHTML = investorData.map(row => `
+                <tr>
+                    <td>Year ${row.year}</td>
+                    <td>${formatNumber(row.tokensHeld)}</td>
+                    <td>${row.tokenPrice.toFixed(3)}</td>
+                    <td>${formatCurrency(row.portfolioValue)}</td>
+                    <td>${formatCurrency(row.annualWithdrawn)}</td>
+                    <td>${formatCurrency(row.cumulativeWithdrawn)}</td>
+                    <td>${formatCurrency(row.totalReturn)}</td>
+                </tr>
+            `).join('');
+        }
+        
+        function calculateG2Returns() {
+            g2Data = [];
+            let tokensHeld = loanModelData.g2TokenAllocation;
+            let cumulativeWithdrawn = 0;
+            let tokenPrice = POST_INJECTION_PRICE;
+            const monthlyVesting = tokensHeld / VESTING_MONTHS;
+            
+            for (let year = 1; year <= loanModelData.projectionYears; year++) {
+                let annualWithdrawn = 0;
+                
+                for (let month = 1; month <= 12; month++) {
+                    const totalMonth = (year - 1) * 12 + month;
+                    
+                    if (totalMonth > LOCK_MONTHS && totalMonth <= (LOCK_MONTHS + VESTING_MONTHS)) {
+                        const monthlyWithdraw = monthlyVesting * loanModelData.g2WithdrawPercent;
+                        annualWithdrawn += monthlyWithdraw * tokenPrice;
+                        tokensHeld -= monthlyWithdraw;
+                    }
+                    
+                    tokenPrice *= (1 + loanModelData.annualGrowth / 12);
+                }
+                
+                cumulativeWithdrawn += annualWithdrawn;
+                
+                g2Data.push({
+                    year,
+                    tokensHeld,
+                    tokenPrice,
+                    portfolioValue: tokensHeld * tokenPrice,
+                    annualWithdrawn,
+                    cumulativeWithdrawn,
+                    totalReturn: tokensHeld * tokenPrice + cumulativeWithdrawn
+                });
+            }
+            
+            displayG2Returns();
+        }
+        
+        function displayG2Returns() {
+            const finalData = g2Data[g2Data.length - 1];
+            const roi = ((finalData.totalReturn - loanModelData.g2Investment) / loanModelData.g2Investment * 100).toFixed(0);
+            
+            document.getElementById('g2-summary').innerHTML = `
+                <div class="summary-card">
+                    <h4>G2 Investment</h4>
+                    <div class="value">${formatCurrency(loanModelData.g2Investment)}</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Tokens Allocated (4x)</h4>
+                    <div class="value">${formatNumber(loanModelData.g2TokenAllocation)}</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Final Portfolio</h4>
+                    <div class="value">${formatCurrency(finalData.portfolioValue)}</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Total Withdrawn</h4>
+                    <div class="value">${formatCurrency(finalData.cumulativeWithdrawn)}</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Total Return</h4>
+                    <div class="value">${formatCurrency(finalData.totalReturn)}</div>
+                </div>
+                <div class="summary-card">
+                    <h4>ROI</h4>
+                    <div class="value">${roi}%</div>
+                </div>
+            `;
+            
+            document.getElementById('g2-table').innerHTML = g2Data.map(row => `
+                <tr>
+                    <td>Year ${row.year}</td>
+                    <td>${formatNumber(row.tokensHeld)}</td>
+                    <td>${row.tokenPrice.toFixed(3)}</td>
+                    <td>${formatCurrency(row.portfolioValue)}</td>
+                    <td>${formatCurrency(row.annualWithdrawn)}</td>
+                    <td>${formatCurrency(row.cumulativeWithdrawn)}</td>
+                    <td>${formatCurrency(row.totalReturn)}</td>
+                </tr>
+            `).join('');
+        }
+        
+        function calculateLoanRepayment() {
+            loanSchedule = [];
+            const monthlyRate = loanModelData.interestRate / 12;
+            const totalMonths = loanModelData.amortization * 12;
+            const loanPerInvestor = loanModelData.loanAmount;
+            
+            // Calculate monthly payment using amortization formula
+            const monthlyPayment = loanPerInvestor * (monthlyRate * Math.pow(1 + monthlyRate, totalMonths)) / 
+                                   (Math.pow(1 + monthlyRate, totalMonths) - 1);
+            
+            let remainingBalance = loanPerInvestor * loanModelData.numInvestors;
+            let totalPaid = 0;
+            
+            for (let month = 1; month <= totalMonths; month++) {
+                const interest = remainingBalance * monthlyRate;
+                const principal = (monthlyPayment * loanModelData.numInvestors) - interest;
+                remainingBalance -= principal;
+                totalPaid += (monthlyPayment * loanModelData.numInvestors);
+                
+                loanSchedule.push({
+                    month,
+                    paymentPerInvestor: monthlyPayment,
+                    totalPayment: monthlyPayment * loanModelData.numInvestors,
+                    principal,
+                    interest,
+                    remainingBalance: Math.max(0, remainingBalance),
+                    totalPaid
+                });
+            }
+            
+            displayLoanRepayment();
+        }
+        
+        function displayLoanRepayment() {
+            const totalPayments = loanSchedule[loanSchedule.length - 1].totalPaid;
+            const totalInterest = totalPayments - loanModelData.totalLoans;
+            const monthlyPayment = loanSchedule[0].totalPayment;
+            
+            document.getElementById('loan-summary').innerHTML = `
+                <div class="summary-card">
+                    <h4>Total Loan Amount</h4>
+                    <div class="value">${formatCurrency(loanModelData.totalLoans)}</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Monthly Payment</h4>
+                    <div class="value">${formatCurrency(monthlyPayment)}</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Total Interest</h4>
+                    <div class="value">${formatCurrency(totalInterest)}</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Total Payments</h4>
+                    <div class="value">${formatCurrency(totalPayments)}</div>
+                </div>
+            `;
+            
+            // Show first 12 months and then yearly summaries
+            let tableHTML = '';
+            for (let i = 0; i < Math.min(12, loanSchedule.length); i++) {
+                const row = loanSchedule[i];
+                tableHTML += `
+                    <tr>
+                        <td>Month ${row.month}</td>
+                        <td>${formatCurrency(row.paymentPerInvestor)}</td>
+                        <td>${formatCurrency(row.totalPayment)}</td>
+                        <td>${formatCurrency(row.principal)}</td>
+                        <td>${formatCurrency(row.interest)}</td>
+                        <td>${formatCurrency(row.remainingBalance)}</td>
+                    </tr>
+                `;
+            }
+            
+            // Add yearly summaries
+            for (let year = 2; year <= loanModelData.amortization; year++) {
+                const startMonth = (year - 1) * 12;
+                const endMonth = Math.min(year * 12, loanSchedule.length);
+                let yearPrincipal = 0, yearInterest = 0, yearPayments = 0;
+                
+                for (let i = startMonth; i < endMonth; i++) {
+                    yearPrincipal += loanSchedule[i].principal;
+                    yearInterest += loanSchedule[i].interest;
+                    yearPayments += loanSchedule[i].totalPayment;
+                }
+                
+                tableHTML += `
+                    <tr style="background: rgba(34, 197, 94, 0.05);">
+                        <td><strong>Year ${year} Total</strong></td>
+                        <td>-</td>
+                        <td>${formatCurrency(yearPayments)}</td>
+                        <td>${formatCurrency(yearPrincipal)}</td>
+                        <td>${formatCurrency(yearInterest)}</td>
+                        <td>${formatCurrency(loanSchedule[Math.min(endMonth - 1, loanSchedule.length - 1)].remainingBalance)}</td>
+                    </tr>
+                `;
+            }
+            
+            document.getElementById('loan-table').innerHTML = tableHTML;
+        }
+        
+        function calculateSellingPressure() {
+            sellingPressureData = [];
+            let tokenPrice = POST_INJECTION_PRICE;
+            const totalMonths = loanModelData.projectionYears * 12;
+            
+            // Monthly vesting amounts
+            const investorMonthlyVest = (loanModelData.investorTokenAllocation / VESTING_MONTHS);
+            const g2MonthlyVest = (loanModelData.g2TokenAllocation / VESTING_MONTHS);
+            
+            let cumulativePressure = 0;
+            
+            for (let month = 1; month <= totalMonths; month++) {
+                // Calculate token price for this month
+                tokenPrice *= (1 + loanModelData.annualGrowth / 12);
+                
+                // Loan payment required (if within loan term)
+                let loanPayment = 0;
+                if (month <= loanSchedule.length) {
+                    loanPayment = loanSchedule[month - 1].totalPayment;
+                }
+                
+                // Investor sales (after lock period)
+                let investorSales = 0;
+                if (month > LOCK_MONTHS && month <= (LOCK_MONTHS + VESTING_MONTHS)) {
+                    investorSales = investorMonthlyVest * loanModelData.investorWithdrawPercent * tokenPrice;
+                }
+                
+                // G2 sales (after lock period)
+                let g2Sales = 0;
+                if (month > LOCK_MONTHS && month <= (LOCK_MONTHS + VESTING_MONTHS)) {
+                    g2Sales = g2MonthlyVest * loanModelData.g2WithdrawPercent * tokenPrice;
+                }
+                
+                const totalPressure = loanPayment + investorSales + g2Sales;
+                cumulativePressure += totalPressure;
+                
+                sellingPressureData.push({
+                    month,
+                    loanPayment,
+                    investorSales,
+                    g2Sales,
+                    totalPressure,
+                    cumulativePressure
+                });
+            }
+            
+            displaySellingPressure();
+        }
+        
+        function displaySellingPressure() {
+            // Display table (show first 12 months)
+            let tableHTML = '';
+            for (let i = 0; i < Math.min(12, sellingPressureData.length); i++) {
+                const row = sellingPressureData[i];
+                tableHTML += `
+                    <tr>
+                        <td>Month ${row.month}</td>
+                        <td>${formatCurrency(row.loanPayment)}</td>
+                        <td>${formatCurrency(row.investorSales)}</td>
+                        <td>${formatCurrency(row.g2Sales)}</td>
+                        <td>${formatCurrency(row.totalPressure)}</td>
+                        <td>${formatCurrency(row.cumulativePressure)}</td>
+                    </tr>
+                `;
+            }
+            
+            document.getElementById('pressure-table').innerHTML = tableHTML;
+        }
+        
+        function calculateYafaImpact() {
+            yafaData = [];
+            let yafaTokens = loanModelData.yafaTokens;
+            let tokenPrice = POST_INJECTION_PRICE;
+            let cumulativeObligations = 0;
+            
+            for (let year = 1; year <= loanModelData.projectionYears; year++) {
+                let annualObligations = 0;
+                
+                // Calculate annual loan obligations
+                for (let month = 1; month <= 12; month++) {
+                    const totalMonth = (year - 1) * 12 + month;
+                    if (totalMonth <= loanSchedule.length) {
+                        annualObligations += loanSchedule[totalMonth - 1].totalPayment;
+                    }
+                    tokenPrice *= (1 + loanModelData.annualGrowth / 12);
+                }
+                
+                cumulativeObligations += annualObligations;
+                const tokenValue = yafaTokens * tokenPrice;
+                const netPosition = tokenValue - annualObligations;
+                
+                yafaData.push({
+                    year,
+                    yafaTokens,
+                    tokenPrice,
+                    tokenValue,
+                    annualObligations,
+                    netPosition,
+                    cumulativeObligations
+                });
+            }
+            
+            displayYafaImpact();
+        }
+        
+        function displayYafaImpact() {
+            const finalData = yafaData[yafaData.length - 1];
+            const breakEvenMonth = findBreakEvenMonth();
+            
+            document.getElementById('yafa-summary').innerHTML = `
+                <div class="summary-card">
+                    <h4>Initial Tokens Reserved</h4>
+                    <div class="value">${formatNumber(loanModelData.yafaTokens)}</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Final Token Value</h4>
+                    <div class="value">${formatCurrency(finalData.tokenValue)}</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Total Obligations</h4>
+                    <div class="value">${formatCurrency(finalData.cumulativeObligations)}</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Net Position</h4>
+                    <div class="value">${formatCurrency(finalData.tokenValue - finalData.cumulativeObligations)}</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Cash Received Day 1</h4>
+                    <div class="value">${formatCurrency(loanModelData.amountToYafa)}</div>
+                </div>
+            `;
+            
+            // Monthly cashflow requirements
+            const monthlyLoanPayment = loanSchedule.length > 0 ? loanSchedule[0].totalPayment : 0;
+            const peakSellingPressure = Math.max(...sellingPressureData.map(d => d.totalPressure));
+            
+            document.getElementById('yafa-cashflow').innerHTML = `
+                <div class="info-item">
+                    <div class="info-label">Monthly Loan Payment</div>
+                    <div class="info-value">${formatCurrency(monthlyLoanPayment)}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Peak Monthly Pressure</div>
+                    <div class="info-value">${formatCurrency(peakSellingPressure)}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Break-even Month</div>
+                    <div class="info-value">${breakEvenMonth > 0 ? `Month ${breakEvenMonth}` : 'Immediate'}</div>
+                </div>
+            `;
+            
+            document.getElementById('yafa-table').innerHTML = yafaData.map(row => `
+                <tr>
+                    <td>Year ${row.year}</td>
+                    <td>${formatNumber(row.yafaTokens)}</td>
+                    <td>${formatCurrency(row.tokenValue)}</td>
+                    <td>${formatCurrency(row.annualObligations)}</td>
+                    <td>${formatCurrency(row.netPosition)}</td>
+                    <td>${formatCurrency(row.cumulativeObligations)}</td>
+                </tr>
+            `).join('');
+        }
+        
+        function findBreakEvenMonth() {
+            let tokenPrice = POST_INJECTION_PRICE;
+            const yafaTokens = loanModelData.yafaTokens;
+            
+            for (let month = 1; month <= 120; month++) {
+                tokenPrice *= (1 + loanModelData.annualGrowth / 12);
+                const tokenValue = yafaTokens * tokenPrice;
+                
+                let totalObligations = 0;
+                for (let i = 0; i < Math.min(month, loanSchedule.length); i++) {
+                    totalObligations += loanSchedule[i].totalPayment;
+                }
+                
+                if (tokenValue >= totalObligations) {
+                    return month;
+                }
+            }
+            
+            return -1; // Never breaks even
+        }
     </script>
 </body>
 </html>
