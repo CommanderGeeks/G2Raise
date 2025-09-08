@@ -295,7 +295,7 @@
         
         <div class="tabs">
             <button class="tab-button active" onclick="switchTab('loan-main', this)">Loan Model Main</button>
-            <button class="tab-button" onclick="switchTab('investor-returns', this)">Investor Returns</button>
+            <button class="tab-button" onclick="switchTab('business-returns', this)">Business Returns</button>
             <button class="tab-button" onclick="switchTab('g2-returns', this)">G2 Returns</button>
             <button class="tab-button" onclick="switchTab('loan-repayment', this)">Loan Repayment</button>
             <button class="tab-button" onclick="switchTab('selling-pressure', this)">Selling Pressure</button>
@@ -303,22 +303,26 @@
         </div>
         
         <!-- Loan Model Main Tab -->
-        <div id="loan-main" class="tab-button active">
+        <div id="loan-main" class="tab-content active">
             <div class="input-section">
                 <h2 class="section-title">🏦 Loan Structure Parameters</h2>
                 
                 <div class="input-grid">
                     <div class="input-group">
                         <label for="numInvestors">Number of Investors</label>
-                        <input type="number" id="numInvestors" value="25" min="1" step="1">
+                        <input type="number" id="numInvestors" value="15" min="1" step="1">
                     </div>
                     <div class="input-group">
                         <label for="loanAmount">Loan Amount per Investor ($)</label>
-                        <input type="number" id="loanAmount" value="300000" min="100000" step="50000">
+                        <input type="number" id="loanAmount" value="500000" min="100000" step="50000">
+                    </div>
+                    <div class="input-group">
+                        <label for="amountToInvestor">Amount to Investor per Loan ($)</label>
+                        <input type="number" id="amountToInvestor" value="150000" min="0" step="10000">
                     </div>
                     <div class="input-group">
                         <label for="interestRate">Investor Interest Rate (%)</label>
-                        <input type="number" id="interestRate" value="8" min="0" max="20" step="0.5">
+                        <input type="number" id="interestRate" value="6" min="0" max="20" step="0.5">
                     </div>
                     <div class="input-group">
                         <label for="amortization">Amortization Period</label>
@@ -331,7 +335,7 @@
                         </select>
                     </div>
                     <div class="input-group">
-                        <label for="g2Fee">G2 Global Success Fee</label>
+                        <label for="g2Fee">G2 Global Success Fee (%)</label>
                         <select id="g2Fee">
                             <option value="5">5%</option>
                             <option value="10" selected>10%</option>
@@ -340,7 +344,19 @@
                     </div>
                     <div class="input-group">
                         <label for="costPerFile">Cost per Investor File ($)</label>
-                        <input type="number" id="costPerFile" value="26500" min="0" step="500">
+                        <input type="number" id="costPerFile" value="15000" min="0" step="500">
+                    </div>
+                    <div class="input-group">
+                        <label for="investorCashMultiplier">Investor Cash Multiplier</label>
+                        <input type="number" id="investorCashMultiplier" value="4" min="1" max="10" step="0.5">
+                    </div>
+                    <div class="input-group">
+                        <label for="g2CashMultiplier">G2 Cash Multiplier</label>
+                        <input type="number" id="g2CashMultiplier" value="3" min="1" max="10" step="0.5">
+                    </div>
+                    <div class="input-group">
+                        <label for="investmentPercent">% of Amount Invested (vs Cash) (%)</label>
+                        <input type="number" id="investmentPercent" value="50" min="0" max="100" step="10">
                     </div>
                 </div>
                 
@@ -363,6 +379,14 @@
                         <label for="projectionYears">Projection Years</label>
                         <input type="number" id="projectionYears" value="10" min="5" max="20" step="1">
                     </div>
+                    <div class="input-group">
+                        <label for="corporateTaxRate">Corporate Tax Rate (%)</label>
+                        <input type="number" id="corporateTaxRate" value="21" min="0" max="50" step="1">
+                    </div>
+                    <div class="input-group">
+                        <label for="postRaisePrice">Post-Raise Token Price ($)</label>
+                        <input type="number" id="postRaisePrice" value="0.50" min="0.01" max="10" step="0.01">
+                    </div>
                 </div>
                 
                 <button class="calculate-btn" onclick="calculateLoanModel()">Calculate Loan Model</button>
@@ -377,16 +401,12 @@
                             <div class="info-value" id="totalLoans">$0</div>
                         </div>
                         <div class="info-item">
-                            <div class="info-label">G2 Success Fees</div>
-                            <div class="info-value" id="g2TotalFees">$0</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">G2 Investment (50%)</div>
-                            <div class="info-value" id="g2Investment">$0</div>
-                        </div>
-                        <div class="info-item">
                             <div class="info-label">Total to Investors</div>
                             <div class="info-value" id="totalToInvestors">$0</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">G2 Success Fees</div>
+                            <div class="info-value" id="g2TotalFees">$0</div>
                         </div>
                         <div class="info-item">
                             <div class="info-label">File Management Fees</div>
@@ -396,57 +416,46 @@
                             <div class="info-label">Amount to Yafa Ltd (Cash)</div>
                             <div class="info-value" id="amountToYafa">$0</div>
                         </div>
-                    </div>
-                    <h3 style="margin-top: 20px;">Chart Injection Breakdown</h3>
-                    <div class="info-grid">
                         <div class="info-item">
-                            <div class="info-label">Total Direct Chart Buys</div>
-                            <div class="info-value" id="totalDirectChartBuys">$2,700,000</div>
+                            <div class="info-label">Investor Cash Held</div>
+                            <div class="info-value" id="investorCashHeld">$0</div>
                         </div>
                         <div class="info-item">
-                            <div class="info-label">G2 + Investor Chart Buys</div>
-                            <div class="info-value" id="g2InvestorChartBuys">$0</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Yafa OTCs</div>
-                            <div class="info-value" id="yafaOTCs">$340,000</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Yafa Chart Injection</div>
-                            <div class="info-value" id="yafaChartInjection">$0</div>
+                            <div class="info-label">Investor Amount Invested</div>
+                            <div class="info-value" id="investorAmountInvested">$0</div>
                         </div>
                     </div>
                 </div>
                 
                 <div class="info-box">
-                    <h3>Token Allocation (55M Pool @ $0.50 post-injection)</h3>
+                    <h3>Token Allocation</h3>
                     <div class="info-grid">
                         <div class="info-item">
-                            <div class="info-label">Investor Tokens (4x)</div>
+                            <div class="info-label">Investor Tokens (Total)</div>
                             <div class="info-value" id="investorTokens">0</div>
                         </div>
                         <div class="info-item">
-                            <div class="info-label">G2 Tokens (4x)</div>
+                            <div class="info-label">Investor Cost Basis per Token</div>
+                            <div class="info-value" id="investorCostBasis">$0</div>
+                        </div>
+                        <div class="info-item">
+                            <div class="info-label">G2 Tokens (Total)</div>
                             <div class="info-value" id="g2Tokens">0</div>
                         </div>
                         <div class="info-item">
-                            <div class="info-label">Yafa Tokens (Remainder)</div>
-                            <div class="info-value" id="yafaTokens">0</div>
-                        </div>
-                        <div class="info-item">
-                            <div class="info-label">Total Supply Allocated</div>
-                            <div class="info-value" id="totalAllocated">0</div>
+                            <div class="info-label">G2 Cost Basis per Token</div>
+                            <div class="info-value" id="g2CostBasis">$0</div>
                         </div>
                     </div>
                 </div>
             </div>
         </div>
         
-        <!-- Investor Returns Tab -->
-        <div id="investor-returns" class="tab-content">
+        <!-- Business Returns Tab -->
+        <div id="business-returns" class="tab-content">
             <div class="results-card">
-                <h3 class="section-title">💼 Individual Investor Returns ($100k Investment)</h3>
-                <div class="summary-grid" id="investor-summary"></div>
+                <h3 class="section-title">💼 Individual Business Returns</h3>
+                <div class="summary-grid" id="business-summary"></div>
                 <div class="table-container">
                     <table>
                         <thead>
@@ -456,12 +465,16 @@
                                 <th>Tokens Vested</th>
                                 <th>Tokens Sold</th>
                                 <th>Token Price</th>
-                                <th>Total USD Sold</th>
-                                <th>Cumulative Sold</th>
+                                <th>Gross Sale Amount</th>
+                                <th>Capital Gains Tax</th>
+                                <th>Net After Tax</th>
+                                <th>Loan Payment</th>
+                                <th>Remaining Cash</th>
+                                <th>Cumulative Net Cash</th>
                                 <th>Remaining Tokens Value</th>
                             </tr>
                         </thead>
-                        <tbody id="investor-table"></tbody>
+                        <tbody id="business-table"></tbody>
                     </table>
                 </div>
             </div>
@@ -481,8 +494,10 @@
                                 <th>Tokens Vested</th>
                                 <th>Tokens Sold</th>
                                 <th>Token Price</th>
-                                <th>Total USD Sold</th>
-                                <th>Cumulative Sold</th>
+                                <th>Gross Sale Amount</th>
+                                <th>Capital Gains Tax</th>
+                                <th>Net After Tax</th>
+                                <th>Cumulative Net Cash</th>
                                 <th>Remaining Tokens Value</th>
                             </tr>
                         </thead>
@@ -519,18 +534,18 @@
             <div class="results-card">
                 <h3 class="section-title">📉 Total Market Selling Pressure (Annual View)</h3>
                 <div class="info-box">
-                    <p>Note: Loan repayments shown for reference but not included in total selling pressure</p>
+                    <p>Note: Shows token sales from investors and G2 for OTC deals and market liquidity</p>
                 </div>
                 <div class="table-container">
                     <table id="pressure-table">
                         <thead>
                             <tr>
                                 <th>Year</th>
-                                <th>Loan Payments (Reference)</th>
-                                <th>All Investors Sales</th>
-                                <th>G2 Sales</th>
-                                <th>Total Selling Pressure</th>
-                                <th>Cumulative Pressure</th>
+                                <th>All Business Token Sales</th>
+                                <th>G2 Token Sales</th>
+                                <th>Total Token Sales</th>
+                                <th>Total Sale Value (Gross)</th>
+                                <th>Cumulative Sale Value</th>
                             </tr>
                         </thead>
                         <tbody></tbody>
@@ -545,19 +560,19 @@
                 <h3 class="section-title">💰 Yafa Ltd Net Position</h3>
                 <div class="summary-grid" id="yafa-summary"></div>
                 <div class="info-box">
-                    <h3>Monthly Cashflow Requirements</h3>
-                    <div class="info-grid" id="yafa-cashflow"></div>
+                    <h3>Key Metrics</h3>
+                    <div class="info-grid" id="yafa-metrics"></div>
                 </div>
                 <div class="table-container">
                     <table>
                         <thead>
                             <tr>
                                 <th>Year</th>
-                                <th>Yafa Token Holdings</th>
-                                <th>Token Value</th>
-                                <th>Annual Loan Obligations</th>
-                                <th>Net Position</th>
-                                <th>Cumulative Obligations Paid</th>
+                                <th>Token Price</th>
+                                <th>OTC Deal Volume</th>
+                                <th>OTC Revenue (Est 2%)</th>
+                                <th>Cumulative OTC Revenue</th>
+                                <th>Annual Growth Rate</th>
                             </tr>
                         </thead>
                         <tbody id="yafa-table"></tbody>
@@ -570,21 +585,18 @@
 
     <script>
         // Constants
-        const TOTAL_SUPPLY = 1000000000;
-        const POST_INJECTION_PRICE = 0.50;
-        const OG_LOCK_MONTHS = 12;
-        const OG_VESTING_MONTHS = 60; // 5 years
         const INVESTOR_LOCK_MONTHS = 12;
         const INVESTOR_VESTING_MONTHS = 72; // 6 years
+        const G2_LOCK_MONTHS = 12;
+        const G2_VESTING_MONTHS = 72; // 6 years
         
         // Global data storage
         let loanModelData = {};
-        let investorData = [];
+        let businessData = [];
         let g2Data = [];
         let loanSchedule = [];
         let sellingPressureData = [];
         let yafaData = [];
-        let ogModelData = [];
         
         function switchTab(tabName, btn) {
             // Hide all tabs
@@ -625,75 +637,84 @@
             }).format(amount);
         }
         
+        function formatPercentage(amount) {
+            return (amount * 100).toFixed(1) + '%';
+        }
+        
         // Loan Model Calculation
         function calculateLoanModel() {
             // Get inputs
             const numInvestors = parseInt(document.getElementById('numInvestors').value);
             const loanAmount = parseFloat(document.getElementById('loanAmount').value);
+            const amountToInvestor = parseFloat(document.getElementById('amountToInvestor').value);
             const interestRate = parseFloat(document.getElementById('interestRate').value) / 100;
             const amortization = parseInt(document.getElementById('amortization').value);
             const g2FeePercent = parseFloat(document.getElementById('g2Fee').value) / 100;
             const costPerFile = parseFloat(document.getElementById('costPerFile').value);
+            const investorCashMultiplier = parseFloat(document.getElementById('investorCashMultiplier').value);
+            const g2CashMultiplier = parseFloat(document.getElementById('g2CashMultiplier').value);
+            const investmentPercent = parseFloat(document.getElementById('investmentPercent').value) / 100;
             const annualGrowth = parseFloat(document.getElementById('annualGrowth').value) / 100;
             const investorWithdrawPercent = parseFloat(document.getElementById('investorWithdrawPercent').value) / 100;
             const g2WithdrawPercent = parseFloat(document.getElementById('g2WithdrawPercent').value) / 100;
             const projectionYears = parseInt(document.getElementById('projectionYears').value);
+            const corporateTaxRate = parseFloat(document.getElementById('corporateTaxRate').value) / 100;
+            const postRaisePrice = parseFloat(document.getElementById('postRaisePrice').value);
             
             // Calculate deal structure
             const totalLoans = numInvestors * loanAmount;
+            const totalToInvestors = numInvestors * amountToInvestor;
             const g2TotalFees = totalLoans * g2FeePercent;
-            const g2Investment = g2TotalFees * 0.5;
-            const totalToInvestors = numInvestors * 100000;
             const totalFileCosts = numInvestors * costPerFile;
+            const amountToYafa = totalLoans - totalToInvestors - g2TotalFees - totalFileCosts;
             
-            // New calculations for chart buys and OTCs
-            const totalDirectChartBuys = 2700000;
-            const g2InvestorChartBuys = g2Investment + totalToInvestors;
-            const yafaOTCs = 340000;
+            // Calculate cash vs investment split for investors
+            const investorCashHeld = totalToInvestors * (1 - investmentPercent);
+            const investorAmountInvested = totalToInvestors * investmentPercent;
             
-            // Calculate Yafa's portion of the chart buys
-            const yafaChartInjection = totalDirectChartBuys - g2InvestorChartBuys;
+            // Calculate token allocations based on multipliers
+            const investorTokenAllocation = (investorAmountInvested * investorCashMultiplier) / postRaisePrice;
+            const g2TokenAllocation = (g2TotalFees * g2CashMultiplier) / postRaisePrice;
             
-            // Calculate amount to Yafa Ltd (remaining cash after all allocations)
-            const amountToYafa = totalLoans - g2TotalFees - totalToInvestors - totalFileCosts - yafaOTCs - yafaChartInjection;
-            
-            // Calculate token allocations from 55M token pool at $0.50
-            const totalTokenPool = 55000000;
-            const investorTokenAllocation = (totalToInvestors * 4) / POST_INJECTION_PRICE;
-            const g2TokenAllocation = (g2Investment * 4) / POST_INJECTION_PRICE;
-            const yafaTokens = totalTokenPool - investorTokenAllocation - g2TokenAllocation;
+            // Calculate cost basis per token
+            const investorCostBasis = postRaisePrice / investorCashMultiplier;
+            const g2CostBasis = postRaisePrice / g2CashMultiplier;
             
             // Store main model data
             loanModelData = {
                 numInvestors,
                 loanAmount,
+                amountToInvestor,
                 interestRate,
                 amortization,
                 g2FeePercent,
+                investorCashMultiplier,
+                g2CashMultiplier,
+                investmentPercent,
                 totalLoans,
-                g2TotalFees,
-                g2Investment,
                 totalToInvestors,
+                g2TotalFees,
                 totalFileCosts,
                 amountToYafa,
-                totalDirectChartBuys,
-                g2InvestorChartBuys,
-                yafaChartInjection,
-                yafaOTCs,
+                investorCashHeld,
+                investorAmountInvested,
                 investorTokenAllocation,
                 g2TokenAllocation,
-                yafaTokens,
+                investorCostBasis,
+                g2CostBasis,
                 annualGrowth,
                 investorWithdrawPercent,
                 g2WithdrawPercent,
-                projectionYears
+                projectionYears,
+                corporateTaxRate,
+                postRaisePrice
             };
             
             // Display main results
             displayLoanMainResults();
             
             // Calculate all projections
-            calculateInvestorReturns();
+            calculateBusinessReturns();
             calculateG2Returns();
             calculateLoanRepayment();
             calculateSellingPressure();
@@ -702,50 +723,58 @@
         
         function displayLoanMainResults() {
             document.getElementById('totalLoans').textContent = formatCurrency(loanModelData.totalLoans);
-            document.getElementById('g2TotalFees').textContent = formatCurrency(loanModelData.g2TotalFees);
-            document.getElementById('g2Investment').textContent = formatCurrency(loanModelData.g2Investment);
             document.getElementById('totalToInvestors').textContent = formatCurrency(loanModelData.totalToInvestors);
+            document.getElementById('g2TotalFees').textContent = formatCurrency(loanModelData.g2TotalFees);
             document.getElementById('fileFees').textContent = formatCurrency(loanModelData.totalFileCosts);
             document.getElementById('amountToYafa').textContent = formatCurrency(loanModelData.amountToYafa);
-            
-            // Display chart injection breakdown
-            document.getElementById('totalDirectChartBuys').textContent = formatCurrency(loanModelData.totalDirectChartBuys);
-            document.getElementById('g2InvestorChartBuys').textContent = formatCurrency(loanModelData.g2InvestorChartBuys);
-            document.getElementById('yafaChartInjection').textContent = formatCurrency(loanModelData.yafaChartInjection);
-            document.getElementById('yafaOTCs').textContent = formatCurrency(loanModelData.yafaOTCs);
+            document.getElementById('investorCashHeld').textContent = formatCurrency(loanModelData.investorCashHeld);
+            document.getElementById('investorAmountInvested').textContent = formatCurrency(loanModelData.investorAmountInvested);
             
             document.getElementById('investorTokens').textContent = formatNumber(loanModelData.investorTokenAllocation);
+            document.getElementById('investorCostBasis').textContent = formatCurrency(loanModelData.investorCostBasis);
             document.getElementById('g2Tokens').textContent = formatNumber(loanModelData.g2TokenAllocation);
-            document.getElementById('yafaTokens').textContent = formatNumber(loanModelData.yafaTokens);
-            document.getElementById('totalAllocated').textContent = formatNumber(
-                loanModelData.investorTokenAllocation + loanModelData.g2TokenAllocation + loanModelData.yafaTokens
-            );
+            document.getElementById('g2CostBasis').textContent = formatCurrency(loanModelData.g2CostBasis);
             
             document.getElementById('loan-main-results').classList.remove('hidden');
         }
         
-        // Updated Investor Returns with proper vesting schedule
-        function calculateInvestorReturns() {
-            investorData = [];
+        // Business Returns Calculation
+        function calculateBusinessReturns() {
+            businessData = [];
             const tokensPerInvestor = loanModelData.investorTokenAllocation / loanModelData.numInvestors;
             const annualVestAmount = tokensPerInvestor / 6; // 6-year vest after 1-year lock
+            const cashPerInvestor = loanModelData.investorCashHeld / loanModelData.numInvestors;
+            const loanPerInvestor = loanModelData.loanAmount;
             
             let tokensHeld = tokensPerInvestor;
+            let remainingCash = cashPerInvestor;
             let totalVested = 0;
-            let cumulativeSoldUSD = 0;
-            let tokenPrice = POST_INJECTION_PRICE;
+            let cumulativeNetCash = 0;
+            let tokenPrice = loanModelData.postRaisePrice;
             
             for (let year = 1; year <= loanModelData.projectionYears; year++) {
-                tokenPrice = POST_INJECTION_PRICE * Math.pow(1 + loanModelData.annualGrowth, year - 1);
+                tokenPrice = loanModelData.postRaisePrice * Math.pow(1 + loanModelData.annualGrowth, year - 1);
                 
                 let tokensVestedThisYear = 0;
                 let tokensSoldThisYear = 0;
-                let usdSoldThisYear = 0;
+                let grossSaleAmount = 0;
+                let capitalGainsTax = 0;
+                let netAfterTax = 0;
+                let loanPayment = 0;
+                let remainingCashThisYear = 0;
                 
-                // Year 1: Lock period, no vesting
+                // Calculate loan payment for this year
+                if (year <= loanModelData.amortization && year <= loanSchedule.length) {
+                    loanPayment = loanSchedule[year - 1].annualPayment / loanModelData.numInvestors;
+                }
+                
+                // Year 1: Lock period, no vesting, use cash for loan payment
                 if (year === 1) {
                     tokensVestedThisYear = 0;
                     tokensSoldThisYear = 0;
+                    remainingCashThisYear = Math.max(0, remainingCash - loanPayment);
+                    remainingCash = remainingCashThisYear;
+                    cumulativeNetCash += remainingCashThisYear;
                 }
                 // Years 2-7: Vesting period
                 else if (year >= 2 && year <= 7) {
@@ -753,42 +782,63 @@
                     totalVested += tokensVestedThisYear;
                     tokensSoldThisYear = tokensVestedThisYear * loanModelData.investorWithdrawPercent;
                     tokensHeld -= tokensSoldThisYear;
-                    usdSoldThisYear = tokensSoldThisYear * tokenPrice;
-                    cumulativeSoldUSD += usdSoldThisYear;
+                    
+                    grossSaleAmount = tokensSoldThisYear * tokenPrice;
+                    
+                    // Calculate capital gains tax
+                    const costBasis = tokensSoldThisYear * loanModelData.investorCostBasis;
+                    const capitalGains = Math.max(0, grossSaleAmount - costBasis);
+                    capitalGainsTax = capitalGains * loanModelData.corporateTaxRate;
+                    netAfterTax = grossSaleAmount - capitalGainsTax;
+                    
+                    // Use cash first, then token sales for loan payment
+                    let totalAvailable = remainingCash + netAfterTax;
+                    let usedForLoan = Math.min(loanPayment, totalAvailable);
+                    remainingCashThisYear = Math.max(0, totalAvailable - usedForLoan);
+                    remainingCash = 0; // Cash gets used up in early years
+                    cumulativeNetCash += remainingCashThisYear;
                 }
-                // Years 8+: No more vesting
+                // Years 8+: No more vesting, but may still have loan payments
                 else {
                     tokensVestedThisYear = 0;
-                    tokensSoldThisYear = 0;
+                    // If there are still loan payments and remaining cash/previous gains
+                    if (loanPayment > 0 && cumulativeNetCash >= loanPayment) {
+                        cumulativeNetCash -= loanPayment;
+                    }
                 }
                 
-                investorData.push({
+                businessData.push({
                     year,
                     tokensHeld,
                     tokensVested: tokensVestedThisYear,
                     tokensSold: tokensSoldThisYear,
                     tokenPrice,
-                    usdSold: usdSoldThisYear,
-                    cumulativeSoldUSD,
+                    grossSaleAmount,
+                    capitalGainsTax,
+                    netAfterTax,
+                    loanPayment,
+                    remainingCashThisYear,
+                    cumulativeNetCash,
                     remainingValue: tokensHeld * tokenPrice
                 });
             }
             
-            displayInvestorReturns();
+            displayBusinessReturns();
         }
         
-        function displayInvestorReturns() {
-            const finalData = investorData[investorData.length - 1];
-            const totalReturn = finalData.cumulativeSoldUSD + finalData.remainingValue;
-            const roi = ((totalReturn - 100000) / 100000 * 100).toFixed(0);
+        function displayBusinessReturns() {
+            const finalData = businessData[businessData.length - 1];
+            const totalReturn = finalData.cumulativeNetCash + finalData.remainingValue;
+            const initialInvestment = loanModelData.amountToInvestor;
+            const roi = ((totalReturn - initialInvestment) / initialInvestment * 100).toFixed(0);
             
-            document.getElementById('investor-summary').innerHTML = `
+            document.getElementById('business-summary').innerHTML = `
                 <div class="summary-card">
-                    <h4>Investment</h4>
-                    <div class="value">$100,000</div>
+                    <h4>Initial Investment</h4>
+                    <div class="value">${formatCurrency(initialInvestment)}</div>
                 </div>
                 <div class="summary-card">
-                    <h4>Tokens Allocated (4x)</h4>
+                    <h4>Tokens Allocated</h4>
                     <div class="value">${formatNumber(loanModelData.investorTokenAllocation / loanModelData.numInvestors)}</div>
                 </div>
                 <div class="summary-card">
@@ -796,8 +846,8 @@
                     <div class="value">${formatCurrency(finalData.remainingValue)}</div>
                 </div>
                 <div class="summary-card">
-                    <h4>Total Withdrawn</h4>
-                    <div class="value">${formatCurrency(finalData.cumulativeSoldUSD)}</div>
+                    <h4>Net Cash Generated</h4>
+                    <div class="value">${formatCurrency(finalData.cumulativeNetCash)}</div>
                 </div>
                 <div class="summary-card">
                     <h4>Total Return</h4>
@@ -809,21 +859,25 @@
                 </div>
             `;
             
-            document.getElementById('investor-table').innerHTML = investorData.map(row => `
+            document.getElementById('business-table').innerHTML = businessData.map(row => `
                 <tr>
                     <td>Year ${row.year}</td>
                     <td>${formatNumber(row.tokensHeld)}</td>
                     <td>${formatNumber(row.tokensVested)}</td>
                     <td>${formatNumber(row.tokensSold)}</td>
-                    <td>${row.tokenPrice.toFixed(3)}</td>
-                    <td>${formatCurrency(row.usdSold)}</td>
-                    <td>${formatCurrency(row.cumulativeSoldUSD)}</td>
+                    <td>$${row.tokenPrice.toFixed(3)}</td>
+                    <td>${formatCurrency(row.grossSaleAmount)}</td>
+                    <td>${formatCurrency(row.capitalGainsTax)}</td>
+                    <td>${formatCurrency(row.netAfterTax)}</td>
+                    <td>${formatCurrency(row.loanPayment)}</td>
+                    <td>${formatCurrency(row.remainingCashThisYear)}</td>
+                    <td>${formatCurrency(row.cumulativeNetCash)}</td>
                     <td>${formatCurrency(row.remainingValue)}</td>
                 </tr>
             `).join('');
         }
         
-        // Updated G2 Returns with proper vesting schedule
+        // G2 Returns Calculation
         function calculateG2Returns() {
             g2Data = [];
             const g2Tokens = loanModelData.g2TokenAllocation;
@@ -831,15 +885,17 @@
             
             let tokensHeld = g2Tokens;
             let totalVested = 0;
-            let cumulativeSoldUSD = 0;
-            let tokenPrice = POST_INJECTION_PRICE;
+            let cumulativeNetCash = 0;
+            let tokenPrice = loanModelData.postRaisePrice;
             
             for (let year = 1; year <= loanModelData.projectionYears; year++) {
-                tokenPrice = POST_INJECTION_PRICE * Math.pow(1 + loanModelData.annualGrowth, year - 1);
+                tokenPrice = loanModelData.postRaisePrice * Math.pow(1 + loanModelData.annualGrowth, year - 1);
                 
                 let tokensVestedThisYear = 0;
                 let tokensSoldThisYear = 0;
-                let usdSoldThisYear = 0;
+                let grossSaleAmount = 0;
+                let capitalGainsTax = 0;
+                let netAfterTax = 0;
                 
                 // Year 1: Lock period, no vesting
                 if (year === 1) {
@@ -852,8 +908,15 @@
                     totalVested += tokensVestedThisYear;
                     tokensSoldThisYear = tokensVestedThisYear * loanModelData.g2WithdrawPercent;
                     tokensHeld -= tokensSoldThisYear;
-                    usdSoldThisYear = tokensSoldThisYear * tokenPrice;
-                    cumulativeSoldUSD += usdSoldThisYear;
+                    
+                    grossSaleAmount = tokensSoldThisYear * tokenPrice;
+                    
+                    // Calculate capital gains tax
+                    const costBasis = tokensSoldThisYear * loanModelData.g2CostBasis;
+                    const capitalGains = Math.max(0, grossSaleAmount - costBasis);
+                    capitalGainsTax = capitalGains * loanModelData.corporateTaxRate;
+                    netAfterTax = grossSaleAmount - capitalGainsTax;
+                    cumulativeNetCash += netAfterTax;
                 }
                 // Years 8+: No more vesting
                 else {
@@ -867,8 +930,10 @@
                     tokensVested: tokensVestedThisYear,
                     tokensSold: tokensSoldThisYear,
                     tokenPrice,
-                    usdSold: usdSoldThisYear,
-                    cumulativeSoldUSD,
+                    grossSaleAmount,
+                    capitalGainsTax,
+                    netAfterTax,
+                    cumulativeNetCash,
                     remainingValue: tokensHeld * tokenPrice
                 });
             }
@@ -878,16 +943,16 @@
         
         function displayG2Returns() {
             const finalData = g2Data[g2Data.length - 1];
-            const totalReturn = finalData.cumulativeSoldUSD + finalData.remainingValue;
-            const roi = ((totalReturn - loanModelData.g2Investment) / loanModelData.g2Investment * 100).toFixed(0);
+            const totalReturn = finalData.cumulativeNetCash + finalData.remainingValue;
+            const roi = ((totalReturn - loanModelData.g2TotalFees) / loanModelData.g2TotalFees * 100).toFixed(0);
             
             document.getElementById('g2-summary').innerHTML = `
                 <div class="summary-card">
-                    <h4>G2 Investment</h4>
-                    <div class="value">${formatCurrency(loanModelData.g2Investment)}</div>
+                    <h4>G2 Fees Collected</h4>
+                    <div class="value">${formatCurrency(loanModelData.g2TotalFees)}</div>
                 </div>
                 <div class="summary-card">
-                    <h4>Tokens Allocated (4x)</h4>
+                    <h4>Tokens Allocated</h4>
                     <div class="value">${formatNumber(loanModelData.g2TokenAllocation)}</div>
                 </div>
                 <div class="summary-card">
@@ -895,8 +960,8 @@
                     <div class="value">${formatCurrency(finalData.remainingValue)}</div>
                 </div>
                 <div class="summary-card">
-                    <h4>Total Withdrawn</h4>
-                    <div class="value">${formatCurrency(finalData.cumulativeSoldUSD)}</div>
+                    <h4>Net Cash Generated</h4>
+                    <div class="value">${formatCurrency(finalData.cumulativeNetCash)}</div>
                 </div>
                 <div class="summary-card">
                     <h4>Total Return</h4>
@@ -914,15 +979,17 @@
                     <td>${formatNumber(row.tokensHeld)}</td>
                     <td>${formatNumber(row.tokensVested)}</td>
                     <td>${formatNumber(row.tokensSold)}</td>
-                    <td>${row.tokenPrice.toFixed(3)}</td>
-                    <td>${formatCurrency(row.usdSold)}</td>
-                    <td>${formatCurrency(row.cumulativeSoldUSD)}</td>
+                    <td>$${row.tokenPrice.toFixed(3)}</td>
+                    <td>${formatCurrency(row.grossSaleAmount)}</td>
+                    <td>${formatCurrency(row.capitalGainsTax)}</td>
+                    <td>${formatCurrency(row.netAfterTax)}</td>
+                    <td>${formatCurrency(row.cumulativeNetCash)}</td>
                     <td>${formatCurrency(row.remainingValue)}</td>
                 </tr>
             `).join('');
         }
         
-        // Updated Loan Repayment - Annual View
+        // Loan Repayment Calculation
         function calculateLoanRepayment() {
             loanSchedule = [];
             const monthlyRate = loanModelData.interestRate / 12;
@@ -999,41 +1066,39 @@
             `).join('');
         }
         
-        // Updated Selling Pressure - Annual View
+        // Selling Pressure Calculation
         function calculateSellingPressure() {
             sellingPressureData = [];
-            let cumulativePressure = 0;
+            let cumulativeSaleValue = 0;
             
             for (let year = 1; year <= loanModelData.projectionYears; year++) {
-                // Get loan payment for this year (reference only)
-                let loanPayment = 0;
-                if (year <= loanSchedule.length) {
-                    loanPayment = loanSchedule[year - 1].annualPayment;
+                // Get business token sales for this year (all investors combined)
+                let businessTokenSales = 0;
+                let businessSaleValue = 0;
+                if (year <= businessData.length) {
+                    businessTokenSales = businessData[year - 1].tokensSold * loanModelData.numInvestors;
+                    businessSaleValue = businessData[year - 1].grossSaleAmount * loanModelData.numInvestors;
                 }
                 
-                // Get investor sales for this year (all investors combined)
-                let investorSales = 0;
-                if (year <= investorData.length) {
-                    investorSales = investorData[year - 1].usdSold * loanModelData.numInvestors;
-                }
-                
-                // Get G2 sales for this year
-                let g2Sales = 0;
+                // Get G2 token sales for this year
+                let g2TokenSales = 0;
+                let g2SaleValue = 0;
                 if (year <= g2Data.length) {
-                    g2Sales = g2Data[year - 1].usdSold;
+                    g2TokenSales = g2Data[year - 1].tokensSold;
+                    g2SaleValue = g2Data[year - 1].grossSaleAmount;
                 }
                 
-                // Total selling pressure excludes loan payments
-                const totalPressure = investorSales + g2Sales;
-                cumulativePressure += totalPressure;
+                const totalTokenSales = businessTokenSales + g2TokenSales;
+                const totalSaleValue = businessSaleValue + g2SaleValue;
+                cumulativeSaleValue += totalSaleValue;
                 
                 sellingPressureData.push({
                     year,
-                    loanPayment,
-                    investorSales,
-                    g2Sales,
-                    totalPressure,
-                    cumulativePressure
+                    businessTokenSales,
+                    g2TokenSales,
+                    totalTokenSales,
+                    totalSaleValue,
+                    cumulativeSaleValue
                 });
             }
             
@@ -1045,41 +1110,40 @@
             tableBody.innerHTML = sellingPressureData.map(row => `
                 <tr>
                     <td>Year ${row.year}</td>
-                    <td>${formatCurrency(row.loanPayment)}</td>
-                    <td>${formatCurrency(row.investorSales)}</td>
-                    <td>${formatCurrency(row.g2Sales)}</td>
-                    <td>${formatCurrency(row.totalPressure)}</td>
-                    <td>${formatCurrency(row.cumulativePressure)}</td>
+                    <td>${formatNumber(row.businessTokenSales)}</td>
+                    <td>${formatNumber(row.g2TokenSales)}</td>
+                    <td>${formatNumber(row.totalTokenSales)}</td>
+                    <td>${formatCurrency(row.totalSaleValue)}</td>
+                    <td>${formatCurrency(row.cumulativeSaleValue)}</td>
                 </tr>
             `).join('');
         }
         
+        // Yafa Impact Calculation
         function calculateYafaImpact() {
             yafaData = [];
-            let yafaTokens = loanModelData.yafaTokens;
-            let tokenPrice = POST_INJECTION_PRICE;
-            let cumulativeObligations = 0;
+            let tokenPrice = loanModelData.postRaisePrice;
             
             for (let year = 1; year <= loanModelData.projectionYears; year++) {
-                tokenPrice = POST_INJECTION_PRICE * Math.pow(1 + loanModelData.annualGrowth, year - 1);
+                tokenPrice = loanModelData.postRaisePrice * Math.pow(1 + loanModelData.annualGrowth, year - 1);
                 
-                let annualObligations = 0;
-                if (year <= loanSchedule.length) {
-                    annualObligations = loanSchedule[year - 1].annualPayment;
+                // Estimate OTC deal volume as percentage of total sales
+                let otcDealVolume = 0;
+                if (year <= sellingPressureData.length) {
+                    otcDealVolume = sellingPressureData[year - 1].totalSaleValue;
                 }
                 
-                cumulativeObligations += annualObligations;
-                const tokenValue = yafaTokens * tokenPrice;
-                const netPosition = tokenValue - annualObligations;
+                // Estimate 2% revenue from OTC deals
+                const otcRevenue = otcDealVolume * 0.02;
+                
+                const annualGrowthRate = year > 1 ? loanModelData.annualGrowth : 0;
                 
                 yafaData.push({
                     year,
-                    yafaTokens,
                     tokenPrice,
-                    tokenValue,
-                    annualObligations,
-                    netPosition,
-                    cumulativeObligations
+                    otcDealVolume,
+                    otcRevenue,
+                    annualGrowthRate
                 });
             }
             
@@ -1087,69 +1151,57 @@
         }
         
         function displayYafaImpact() {
-            const finalData = yafaData[yafaData.length - 1];
+            const totalOTCRevenue = yafaData.reduce((sum, row) => sum + row.otcRevenue, 0);
+            const finalPrice = yafaData[yafaData.length - 1]?.tokenPrice || loanModelData.postRaisePrice;
+            const peakOTCRevenue = Math.max(...yafaData.map(d => d.otcRevenue));
             
             document.getElementById('yafa-summary').innerHTML = `
                 <div class="summary-card">
-                    <h4>Initial Tokens Reserved</h4>
-                    <div class="value">${formatNumber(loanModelData.yafaTokens)}</div>
-                </div>
-                <div class="summary-card">
-                    <h4>Final Token Value</h4>
-                    <div class="value">${formatCurrency(finalData.tokenValue)}</div>
-                </div>
-                <div class="summary-card">
-                    <h4>Total Obligations</h4>
-                    <div class="value">${formatCurrency(finalData.cumulativeObligations)}</div>
-                </div>
-                <div class="summary-card">
-                    <h4>Net Position</h4>
-                    <div class="value">${formatCurrency(finalData.tokenValue - finalData.cumulativeObligations)}</div>
-                </div>
-                <div class="summary-card">
-                    <h4>Cash Received Day 1</h4>
+                    <h4>Initial Cash Received</h4>
                     <div class="value">${formatCurrency(loanModelData.amountToYafa)}</div>
                 </div>
-            `;
-            
-            // Monthly cashflow requirements
-            const monthlyLoanPayment = loanSchedule.length > 0 ? loanSchedule[0].annualPayment / 12 : 0;
-            const peakAnnualPressure = Math.max(...sellingPressureData.map(d => d.totalPressure));
-            
-            document.getElementById('yafa-cashflow').innerHTML = `
-                <div class="info-item">
-                    <div class="info-label">Monthly Loan Payment</div>
-                    <div class="info-value">${formatCurrency(monthlyLoanPayment)}</div>
+                <div class="summary-card">
+                    <h4>Total OTC Revenue (Est)</h4>
+                    <div class="value">${formatCurrency(totalOTCRevenue)}</div>
                 </div>
-                <div class="info-item">
-                    <div class="info-label">Peak Annual Selling Pressure</div>
-                    <div class="info-value">${formatCurrency(peakAnnualPressure)}</div>
+                <div class="summary-card">
+                    <h4>Final Token Price</h4>
+                    <div class="value">$${finalPrice.toFixed(3)}</div>
                 </div>
-                <div class="info-item">
-                    <div class="info-label">Break-even Year</div>
-                    <div class="info-value">${findBreakEvenYear()}</div>
+                <div class="summary-card">
+                    <h4>Price Growth Multiple</h4>
+                    <div class="value">${(finalPrice / loanModelData.postRaisePrice).toFixed(1)}x</div>
                 </div>
             `;
             
-            document.getElementById('yafa-table').innerHTML = yafaData.map(row => `
+            document.getElementById('yafa-metrics').innerHTML = `
+                <div class="info-item">
+                    <div class="info-label">Peak Annual OTC Revenue</div>
+                    <div class="info-value">${formatCurrency(peakOTCRevenue)}</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Business Model</div>
+                    <div class="info-value">OTC Trading Fees</div>
+                </div>
+                <div class="info-item">
+                    <div class="info-label">Revenue Source</div>
+                    <div class="info-value">2% of Token Sales</div>
+                </div>
+            `;
+            
+            let cumulativeOTCRevenue = 0;
+            document.getElementById('yafa-table').innerHTML = yafaData.map(row => {
+                cumulativeOTCRevenue += row.otcRevenue;
+                return `
                 <tr>
                     <td>Year ${row.year}</td>
-                    <td>${formatNumber(row.yafaTokens)}</td>
-                    <td>${formatCurrency(row.tokenValue)}</td>
-                    <td>${formatCurrency(row.annualObligations)}</td>
-                    <td>${formatCurrency(row.netPosition)}</td>
-                    <td>${formatCurrency(row.cumulativeObligations)}</td>
+                    <td>$${row.tokenPrice.toFixed(3)}</td>
+                    <td>${formatCurrency(row.otcDealVolume)}</td>
+                    <td>${formatCurrency(row.otcRevenue)}</td>
+                    <td>${formatCurrency(cumulativeOTCRevenue)}</td>
+                    <td>${formatPercentage(row.annualGrowthRate)}</td>
                 </tr>
-            `).join('');
-        }
-        
-        function findBreakEvenYear() {
-            for (let i = 0; i < yafaData.length; i++) {
-                if (yafaData[i].tokenValue >= yafaData[i].cumulativeObligations) {
-                    return `Year ${yafaData[i].year}`;
-                }
-            }
-            return 'Not within projection period';
+            `}).join('');
         }
     </script>
 </body>
