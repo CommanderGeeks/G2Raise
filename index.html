@@ -940,8 +940,16 @@
             
             document.getElementById('business-summary').innerHTML = `
                 <div class="summary-card">
-                    <h4>Initial Investment</h4>
-                    <div class="value">${formatCurrency(initialInvestment)}</div>
+                    <h4>Loan Amount</h4>
+                    <div class="value">${formatCurrency(loanModelData.loanAmount)}</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Amount Invested</h4>
+                    <div class="value">${formatCurrency(loanModelData.individualInvestmentAmount)}</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Cash Held</h4>
+                    <div class="value">${formatCurrency(loanModelData.individualCashHeld)}</div>
                 </div>
                 <div class="summary-card">
                     <h4>Tokens Allocated</h4>
