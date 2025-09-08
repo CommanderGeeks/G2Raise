@@ -695,7 +695,6 @@
                 totalToInvestors,
                 g2TotalFees,
                 totalFileCosts,
-                amountToYafa,
                 investorCashHeld,
                 investorAmountInvested,
                 investorTokenAllocation,
@@ -722,14 +721,29 @@
         }
         
         function displayLoanMainResults() {
+            // Deal Structure Summary
             document.getElementById('totalLoans').textContent = formatCurrency(loanModelData.totalLoans);
             document.getElementById('totalToInvestors').textContent = formatCurrency(loanModelData.totalToInvestors);
             document.getElementById('g2TotalFees').textContent = formatCurrency(loanModelData.g2TotalFees);
+            document.getElementById('g2YafaInvestment').textContent = formatCurrency(loanModelData.g2YafaInvestment);
+            document.getElementById('g2YafaValuePostRaise').textContent = formatCurrency(loanModelData.g2YafaValuePostRaise);
             document.getElementById('fileFees').textContent = formatCurrency(loanModelData.totalFileCosts);
-            document.getElementById('amountToYafa').textContent = formatCurrency(loanModelData.amountToYafa);
-            document.getElementById('investorCashHeld').textContent = formatCurrency(loanModelData.investorCashHeld);
-            document.getElementById('investorAmountInvested').textContent = formatCurrency(loanModelData.investorAmountInvested);
             
+            // Investor Breakdown
+            document.getElementById('individualCashHeld').textContent = formatCurrency(loanModelData.individualCashHeld);
+            document.getElementById('groupCashHeld').textContent = formatCurrency(loanModelData.investorCashHeld);
+            document.getElementById('individualInvestmentAmount').textContent = formatCurrency(loanModelData.individualInvestmentAmount);
+            document.getElementById('groupInvestmentAmount').textContent = formatCurrency(loanModelData.investorAmountInvested);
+            document.getElementById('individualPostRaiseValue').textContent = formatCurrency(loanModelData.individualPostRaiseValue);
+            document.getElementById('groupPostRaiseValue').textContent = formatCurrency(loanModelData.investorAmountInvested * loanModelData.investorCashMultiplier);
+            
+            // Chart Injection
+            document.getElementById('g2ChartContribution').textContent = formatCurrency(loanModelData.g2ChartContribution);
+            document.getElementById('investorChartContribution').textContent = formatCurrency(loanModelData.investorChartContribution);
+            document.getElementById('yafaChartContribution').textContent = formatCurrency(loanModelData.yafaChartContribution);
+            document.getElementById('amountToYafaCash').textContent = formatCurrency(loanModelData.amountToYafaCash);
+            
+            // Token Allocation (keeping existing)
             document.getElementById('investorTokens').textContent = formatNumber(loanModelData.investorTokenAllocation);
             document.getElementById('investorCostBasis').textContent = formatCurrency(loanModelData.investorCostBasis);
             document.getElementById('g2Tokens').textContent = formatNumber(loanModelData.g2TokenAllocation);
