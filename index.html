@@ -305,7 +305,6 @@
             <button class="tab-button" onclick="switchTab('g2-returns', this)">G2 Returns</button>
             <button class="tab-button" onclick="switchTab('loan-repayment', this)">Loan Repayment</button>
             <button class="tab-button" onclick="switchTab('selling-pressure', this)">Selling Pressure</button>
-            <button class="tab-button" onclick="switchTab('yafa-impact', this)">Yafa Net Impact</button>
         </div>
         
         <!-- Loan Model Main Tab -->
@@ -620,15 +619,6 @@
                 </div>
             </div>
         </div>
-        
-        <!-- Yafa Net Impact Tab -->
-        <div id="yafa-impact" class="tab-content">
-            <div class="results-card">
-                <h3 class="section-title">💰 Yafa Ltd Token Holdings & Cash</h3>
-                <div class="summary-grid" id="yafa-summary"></div>
-            </div>
-        </div>
-        
     </div>
 
     <script>
@@ -1217,91 +1207,6 @@
                     <td>${formatCurrency(row.cumulativeSaleValue)}</td>
                 </tr>
             `).join('');
-        }
-        
-        // Yafa Impact Calculation
-        function calculateYafaImpact() {
-            yafaData = [];
-            let tokenPrice = loanModelData.postRaisePrice;
-            
-            for (let year = 1; year <= loanModelData.projectionYears; year++) {
-                tokenPrice = loanModelData.postRaisePrice * Math.pow(1 + loanModelData.annualGrowth, year - 1);
-                
-                // Estimate OTC deal volume as percentage of total sales
-                let otcDealVolume = 0;
-                if (year <= sellingPressureData.length) {
-                    otcDealVolume = sellingPressureData[year - 1].totalSaleValue;
-                }
-                
-                // Estimate 2% revenue from OTC deals
-                const otcRevenue = otcDealVolume * 0.02;
-                
-                const annualGrowthRate = year > 1 ? loanModelData.annualGrowth : 0;
-                
-                yafaData.push({
-                    year,
-                    tokenPrice,
-                    otcDealVolume,
-                    otcRevenue,
-                    annualGrowthRate
-                });
-            }
-            
-            displayYafaImpact();
-        }
-        
-        function displayYafaImpact() {
-            const totalOTCRevenue = yafaData.reduce((sum, row) => sum + row.otcRevenue, 0);
-            const finalPrice = yafaData[yafaData.length - 1]?.tokenPrice || loanModelData.postRaisePrice;
-            const peakOTCRevenue = Math.max(...yafaData.map(d => d.otcRevenue));
-            
-            document.getElementById('yafa-summary').innerHTML = `
-                <div class="summary-card">
-                    <h4>Initial Cash Received</h4>
-                    <div class="value">${formatCurrency(loanModelData.amountToYafa)}</div>
-                </div>
-                <div class="summary-card">
-                    <h4>Total OTC Revenue (Est)</h4>
-                    <div class="value">${formatCurrency(totalOTCRevenue)}</div>
-                </div>
-                <div class="summary-card">
-                    <h4>Final Token Price</h4>
-                    <div class="value">$${finalPrice.toFixed(3)}</div>
-                </div>
-                <div class="summary-card">
-                    <h4>Price Growth Multiple</h4>
-                    <div class="value">${(finalPrice / loanModelData.postRaisePrice).toFixed(1)}x</div>
-                </div>
-            `;
-            
-            document.getElementById('yafa-metrics').innerHTML = `
-                <div class="info-item">
-                    <div class="info-label">Peak Annual OTC Revenue</div>
-                    <div class="info-value">${formatCurrency(peakOTCRevenue)}</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Business Model</div>
-                    <div class="info-value">OTC Trading Fees</div>
-                </div>
-                <div class="info-item">
-                    <div class="info-label">Revenue Source</div>
-                    <div class="info-value">2% of Token Sales</div>
-                </div>
-            `;
-            
-            let cumulativeOTCRevenue = 0;
-            document.getElementById('yafa-table').innerHTML = yafaData.map(row => {
-                cumulativeOTCRevenue += row.otcRevenue;
-                return `
-                <tr>
-                    <td>Year ${row.year}</td>
-                    <td>$${row.tokenPrice.toFixed(3)}</td>
-                    <td>${formatCurrency(row.otcDealVolume)}</td>
-                    <td>${formatCurrency(row.otcRevenue)}</td>
-                    <td>${formatCurrency(cumulativeOTCRevenue)}</td>
-                    <td>${formatPercentage(row.annualGrowthRate)}</td>
-                </tr>
-            `}).join('');
         }
     </script>
 </body>
