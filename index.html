@@ -340,6 +340,17 @@
                         </select>
                     </div>
                     <div class="input-group">
+                        <label for="businessVesting">Business Vesting Period</label>
+                        <select id="businessVesting">
+                            <option value="1">1 Year</option>
+                            <option value="2">2 Years</option>
+                            <option value="3">3 Years</option>
+                            <option value="4">4 Years</option>
+                            <option value="5">5 Years</option>
+                            <option value="6" selected>6 Years</option>
+                        </select>
+                    </div>
+                    <div class="input-group">
                         <label for="g2Fee">G2 Global Success Fee (%)</label>
                         <select id="g2Fee">
                             <option value="5">5%</option>
@@ -548,7 +559,7 @@
         <!-- G2 Returns Tab -->
         <div id="g2-returns" class="tab-content">
             <div class="results-card">
-                <h3 class="section-title">🤝 G2 Investment Returns</h3>
+                <h3 class="section-title">🤝 G2 Returns</h3>
                 <div class="summary-grid" id="g2-summary"></div>
                 <div class="table-container">
                     <table>
@@ -624,9 +635,8 @@
     <script>
         // Constants
         const INVESTOR_LOCK_MONTHS = 12;
-        const INVESTOR_VESTING_MONTHS = 72; // 6 years
         const G2_LOCK_MONTHS = 12;
-        const G2_VESTING_MONTHS = 72; // 6 years
+        const G2_VESTING_MONTHS = 72; // 6 years (keeping G2 vesting fixed at 6 years)
         
         // Global data storage
         let loanModelData = {};
@@ -694,6 +704,7 @@
             const amountToInvestor = parseFloat(document.getElementById('amountToInvestor').value);
             const interestRate = parseFloat(document.getElementById('interestRate').value) / 100;
             const amortization = parseInt(document.getElementById('amortization').value);
+            const businessVesting = parseInt(document.getElementById('businessVesting').value);
             const g2FeePercent = parseFloat(document.getElementById('g2Fee').value) / 100;
             const costPerFile = parseFloat(document.getElementById('costPerFile').value);
             const investorCashMultiplier = parseFloat(document.getElementById('investorCashMultiplier').value);
@@ -750,6 +761,7 @@
                 amountToInvestor,
                 interestRate,
                 amortization,
+                businessVesting,
                 g2FeePercent,
                 investorCashMultiplier,
                 g2CashMultiplier,
@@ -829,11 +841,11 @@
             document.getElementById('loan-main-results').classList.remove('hidden');
         }
         
-        // Business Returns Calculation
+        // Business Returns Calculation (Updated with Variable Vesting)
         function calculateBusinessReturns() {
             businessData = [];
             const tokensPerInvestor = loanModelData.investorTokenAllocation / loanModelData.numInvestors;
-            const annualVestAmount = tokensPerInvestor / 6; // 6-year vest after 1-year lock
+            const annualVestAmount = tokensPerInvestor / loanModelData.businessVesting; // Variable vesting period
             const cashPerInvestor = loanModelData.investorCashHeld / loanModelData.numInvestors;
             
             let tokensHeld = tokensPerInvestor;
@@ -863,8 +875,8 @@
                     tokensSoldThisYear = 0;
                     cumulativeNetCash -= loanPayment;
                 }
-                // Years 2-7: Vesting period
-                else if (year >= 2 && year <= 7) {
+                // Vesting period: Years 2 to (1 + businessVesting)
+                else if (year >= 2 && year <= (1 + loanModelData.businessVesting)) {
                     tokensVestedThisYear = annualVestAmount;
                     totalVested += tokensVestedThisYear;
                     tokensSoldThisYear = tokensVestedThisYear * loanModelData.investorWithdrawPercent;
@@ -881,7 +893,7 @@
                     // Add token sale proceeds, then subtract loan payment
                     cumulativeNetCash += netAfterTax - loanPayment;
                 }
-                // Years 8+: No more vesting, but may still have loan payments
+                // Post-vesting: No more vesting, but may still have loan payments
                 else {
                     tokensVestedThisYear = 0;
                     tokensSoldThisYear = 0;
@@ -965,15 +977,21 @@
             `).join('');
         }
         
-        // G2 Returns Calculation
+        // G2 Returns Calculation (Updated Structure)
         function calculateG2Returns() {
             g2Data = [];
             const g2Tokens = loanModelData.g2TokenAllocation;
-            const annualVestAmount = g2Tokens / 6; // 6-year vest after 1-year lock
+            const annualVestAmount = g2Tokens / 6; // G2 still has 6-year vesting
+            
+            // G2 Fee Components
+            const g2FeesCollected = loanModelData.g2TotalFees;
+            const g2ServiceFee = loanModelData.totalFileCosts;
+            const amountInvestedIntoYafa = loanModelData.g2YafaInvestment;
+            const g2FeesCollectedCash = g2FeesCollected / 2;
             
             let tokensHeld = g2Tokens;
             let totalVested = 0;
-            let cumulativeNetCash = 0;
+            let cumulativeNetCash = g2FeesCollectedCash + g2ServiceFee; // Start with initial cash
             let tokenPrice = loanModelData.postRaisePrice;
             
             for (let year = 1; year <= loanModelData.projectionYears; year++) {
@@ -990,7 +1008,7 @@
                     tokensVestedThisYear = 0;
                     tokensSoldThisYear = 0;
                 }
-                // Years 2-7: Vesting period
+                // Years 2-7: Vesting period (G2 keeps 6-year vesting)
                 else if (year >= 2 && year <= 7) {
                     tokensVestedThisYear = annualVestAmount;
                     totalVested += tokensVestedThisYear;
@@ -1022,7 +1040,12 @@
                     capitalGainsTax,
                     netAfterTax,
                     cumulativeNetCash,
-                    remainingValue: tokensHeld * tokenPrice
+                    remainingValue: tokensHeld * tokenPrice,
+                    // Store G2 specific values for summary
+                    g2FeesCollected,
+                    g2ServiceFee,
+                    amountInvestedIntoYafa,
+                    g2FeesCollectedCash
                 });
             }
             
@@ -1031,13 +1054,38 @@
         
         function displayG2Returns() {
             const finalData = g2Data[g2Data.length - 1];
+            const totalCashGenerated = finalData.cumulativeNetCash;
             const totalReturn = finalData.cumulativeNetCash + finalData.remainingValue;
-            const roi = ((totalReturn - loanModelData.g2TotalFees) / loanModelData.g2TotalFees * 100).toFixed(0);
+            const initialInvestment = finalData.amountInvestedIntoYafa;
+            const roi = ((totalReturn - initialInvestment) / initialInvestment * 100).toFixed(0);
+            
+            // Calculate cash generated from token sales only
+            const cashFromTokenSales = totalCashGenerated - finalData.g2ServiceFee - finalData.g2FeesCollectedCash;
+            
+            // Calculate ROI on Yafa Investment (token-related returns only)
+            const yafaInvestmentReturn = cashFromTokenSales + finalData.remainingValue;
+            const roiOnYafaInvestment = ((yafaInvestmentReturn) / initialInvestment * 100).toFixed(0);
             
             document.getElementById('g2-summary').innerHTML = `
                 <div class="summary-card">
                     <h4>G2 Fees Collected</h4>
-                    <div class="value">${formatCurrency(loanModelData.g2TotalFees/2)}</div>
+                    <div class="value">${formatCurrency(finalData.g2FeesCollected)}</div>
+                </div>
+                <div class="summary-card">
+                    <h4>G2 Service Fee</h4>
+                    <div class="value">${formatCurrency(finalData.g2ServiceFee)}</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Amount Invested into Yafa</h4>
+                    <div class="value">${formatCurrency(finalData.amountInvestedIntoYafa)}</div>
+                </div>
+                <div class="summary-card">
+                    <h4>G2 Fees Collected Cash</h4>
+                    <div class="value">${formatCurrency(finalData.g2FeesCollectedCash)}</div>
+                </div>
+                <div class="summary-card">
+                    <h4>Cash Generated from Token Sales</h4>
+                    <div class="value">${formatCurrency(cashFromTokenSales)}</div>
                 </div>
                 <div class="summary-card">
                     <h4>Tokens Allocated</h4>
@@ -1048,16 +1096,12 @@
                     <div class="value">${formatCurrency(finalData.remainingValue)}</div>
                 </div>
                 <div class="summary-card">
-                    <h4>Net Cash Generated</h4>
-                    <div class="value">${formatCurrency(finalData.cumulativeNetCash)}</div>
+                    <h4>Total Cash Generated</h4>
+                    <div class="value">${formatCurrency(totalCashGenerated)}</div>
                 </div>
                 <div class="summary-card">
-                    <h4>Total Return</h4>
-                    <div class="value">${formatCurrency(totalReturn)}</div>
-                </div>
-                <div class="summary-card">
-                    <h4>ROI</h4>
-                    <div class="value">${roi*2}%</div>
+                    <h4>ROI on Yafa Investment</h4>
+                    <div class="value">${roiOnYafaInvestment}%</div>
                 </div>
             `;
             
@@ -1207,6 +1251,12 @@
                     <td>${formatCurrency(row.cumulativeSaleValue)}</td>
                 </tr>
             `).join('');
+        }
+        
+        // Placeholder for Yafa Impact calculation
+        function calculateYafaImpact() {
+            // This function can be expanded if needed for additional analysis
+            yafaData = [];
         }
     </script>
 </body>
