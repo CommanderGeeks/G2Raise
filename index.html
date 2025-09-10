@@ -314,19 +314,19 @@
                 
                 <div class="input-grid">
                     <div class="input-group">
-                        <label for="numInvestors">Number of Investors</label>
+                        <label for="numInvestors">Number of Purchasers</label>
                         <input type="number" id="numInvestors" value="15" min="1" step="1">
                     </div>
                     <div class="input-group">
-                        <label for="loanAmount">Loan Amount per Investor ($)</label>
+                        <label for="loanAmount">Loan Amount per Purchaser ($)</label>
                         <input type="number" id="loanAmount" value="500000" min="100000" step="50000">
                     </div>
                     <div class="input-group">
-                        <label for="amountToInvestor">Amount to Investor per Loan ($)</label>
+                        <label for="amountToInvestor">Amount to Purchaser per Loan ($)</label>
                         <input type="number" id="amountToInvestor" value="150000" min="0" step="10000">
                     </div>
                     <div class="input-group">
-                        <label for="interestRate">Investor Interest Rate (%)</label>
+                        <label for="interestRate">Purchaser Interest Rate (%)</label>
                         <input type="number" id="interestRate" value="6" min="0" max="20" step="0.5">
                     </div>
                     <div class="input-group">
@@ -359,11 +359,11 @@
                         </select>
                     </div>
                     <div class="input-group">
-                        <label for="costPerFile">Cost per Investor File ($)</label>
+                        <label for="costPerFile">Cost per Purchaser File ($)</label>
                         <input type="number" id="costPerFile" value="15000" min="0" step="500">
                     </div>
                     <div class="input-group">
-                        <label for="investorCashMultiplier">Investor Cash Multiplier</label>
+                        <label for="investorCashMultiplier">Purchaser Cash Multiplier</label>
                         <input type="number" id="investorCashMultiplier" value="4" min="1" max="10" step="0.5">
                     </div>
                     <div class="input-group">
@@ -384,7 +384,7 @@
                         <input type="number" id="annualGrowth" value="20" min="0" max="100" step="1">
                     </div>
                     <div class="input-group">
-                        <label for="investorWithdrawPercent">Investor % of Vested Tokens Sold</label>
+                        <label for="investorWithdrawPercent">Purchaser % of Vested Tokens Sold</label>
                         <input type="number" id="investorWithdrawPercent" value="50" min="0" max="100" step="10">
                     </div>
                     <div class="input-group">
@@ -417,7 +417,7 @@
                             <div class="info-value" id="totalLoans">$0</div>
                         </div>
                         <div class="info-item">
-                            <div class="info-label">Total to Investors</div>
+                            <div class="info-label">Total to Purchasers</div>
                             <div class="info-value" id="totalToInvestors">$0</div>
                         </div>
                         <div class="info-item">
@@ -448,8 +448,8 @@
                 </div>
                 
                 <div class="info-box">
-                    <h3>Investor Breakdown</h3>
-                    <h4>Individual Investor (Per Person)</h4>
+                    <h3>Purchaser Breakdown</h3>
+                    <h4>Individual Purchaser (Per Person)</h4>
                     <div class="info-grid">
                         <div class="info-item">
                             <div class="info-label">Cash Held</div>
@@ -465,7 +465,7 @@
                         </div>
                     </div>
                     
-                    <h4>Group Totals (All Investors)</h4>
+                    <h4>Group Totals (All Purchasers)</h4>
                     <div class="info-grid">
                         <div class="info-item">
                             <div class="info-label">Total Cash Held</div>
@@ -490,7 +490,7 @@
                             <div class="info-value" id="g2ChartContribution">$0</div>
                         </div>
                         <div class="info-item">
-                            <div class="info-label">Investor Contribution</div>
+                            <div class="info-label">Purchaser Contribution</div>
                             <div class="info-value" id="investorChartContribution">$0</div>
                         </div>
                         <div class="info-item">
@@ -508,11 +508,11 @@
                     <h3>Token Allocation</h3>
                     <div class="info-grid">
                         <div class="info-item">
-                            <div class="info-label">Investor Tokens (Total)</div>
+                            <div class="info-label">Purchaser Tokens (Total)</div>
                             <div class="info-value" id="investorTokens">0</div>
                         </div>
                         <div class="info-item">
-                            <div class="info-label">Investor Cost Basis per Token</div>
+                            <div class="info-label">Purchaser Cost Basis per Token</div>
                             <div class="info-value" id="investorCostBasis">$0</div>
                         </div>
                         <div class="info-item">
@@ -594,7 +594,7 @@
                             <tr>
                                 <th>Year</th>
                                 <th>Total Annual Payment</th>
-                                <th>Per Investor Payment</th>
+                                <th>Per Purchaser Payment</th>
                                 <th>Principal</th>
                                 <th>Interest</th>
                                 <th>Remaining Balance</th>
@@ -611,7 +611,7 @@
             <div class="results-card">
                 <h3 class="section-title">📉 Total Market Selling Pressure (Annual View)</h3>
                 <div class="info-box">
-                    <p>Note: Shows token sales from investors and G2 for OTC deals and market liquidity</p>
+                    <p>Note: Shows token sales from Purchasers and G2 for OTC deals and market liquidity</p>
                 </div>
                 <div class="table-container">
                     <table id="pressure-table">
